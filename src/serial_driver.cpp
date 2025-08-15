@@ -46,12 +46,10 @@ void serial_driver::recv_1for6_42()
 {
     uint8_t CRC8 = 0;
     uint16_t CRC16 = 0;
-    cdc_tr_message_head_data_s SOF = {0};
     cdc_tr_message_data_s cdc_rx_message_data = {0};
-    // TODO 
     while (init_flag)
-    // while (ros::ok() && init_flag)
     {
+        cdc_tr_message_head_data_s SOF = {0};
         try
         {
             _ser.read(&(SOF.head), 1); 
@@ -79,7 +77,6 @@ void serial_driver::recv_1for6_42()
                         {
                         case (MODE_RESET_ZERO):
                         case (MODE_CONF_WRITE):
-                        case (MODE_CONF_LOAD):
                             *p_mode_flag = SOF.cmd;
                             for (int i = 0; i < SOF.len; i++)
                             {

@@ -14,12 +14,19 @@ namespace hightorque_robot
         std::cout << "robot_config: " << config["robot"]["name"].as<std::string>() << std::endl;
         auto param_file = config["robot"]["param_file"].as<std::string>();
         robot_params  = parseRobotParams(param_file);
-        SDK_version = robot_params.SDK_version;
         Seial_baudrate = robot_params.Seial_baudrate;
         robot_name = robot_params.robot_name;
+        motor_timeout_ms = robot_params.motor_timeout_ms;
         CANboard_num = robot_params.CANboard_num;
         CANboard_type = robot_params.CANboard_type;
         Serial_Type = robot_params.Serial_Type;
+
+
+        if (motor_timeout_ms < 0 || motor_timeout_ms > 32760)
+        {
+            ROS_ERROR("The value of motor_timeout_ms is out of the valid range [0, 32760]");
+            exit(-1);
+        }
         
         std::cout << "\033[1;32mGot params SDK_version: v" << SDK_version2 << "\033[0m" << std::endl;
         std::cout << "\033[1;32mThe robot name is " << robot_name << "\033[0m" << std::endl;
@@ -45,6 +52,11 @@ namespace hightorque_robot
             cp->puch_motor(&Motors);
         }
         set_port_motor_num(); // 设置通道上挂载的电机数，并获取主控板固件版本号
+        if (slave_v >= 4.1f) 
+        {
+            canboard_fdcan_reset();
+        }
+
         if (slave_v < 4.0f)  // 检测电机连接是否正常
         {
             fun_v = fun_v1;
@@ -55,8 +67,14 @@ namespace hightorque_robot
             fun_v = fun_v2;
             chevk_motor_connection_version();
         }
-        // set_timeout(5000);  // 设置所有电机的超时时间，单位ms，这里默认给 5s
-        // set_timeout(0, 5000);  // 设置一条 can 通道所有电机的超时时间
+
+        if (motor_timeout_ms != 0)
+        {
+            set_timeout(motor_timeout_ms);
+        }
+        
+        send_get_motor_state_cmd();
+        
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -72,8 +90,9 @@ namespace hightorque_robot
     robot::~robot()
     {
         // publish_joint_state=0;
-        set_stop();
-        motor_send_2();
+        set_reset();
+        set_reset();
+        set_reset();
         for (auto &thread : ser_recv_threads)
         {
             if (thread.joinable())
@@ -271,9 +290,7 @@ namespace hightorque_robot
         struct sp_port *port;
         try
         {
-            /* code */
             sp_get_port_by_name(name, &port);
-            sp_open(port, SP_MODE_READ);
             if (sp_get_port_usb_vid_pid(port, &vid, &pid) != SP_OK) 
             {
                 r = -1;
@@ -303,7 +320,6 @@ namespace hightorque_robot
             // std::cout << "Port: " << name << ", PID: 0x" << std::hex << pid << ", VID: 0x" << vid << std::dec << std::endl;
 
             // 关闭端口
-            sp_close(port);
             sp_free_port(port);
         }
         catch(const std::exception& e)
@@ -330,22 +346,21 @@ namespace hightorque_robot
         if (!directory)
         {
             std::cerr << "Could not open the directory " << base_path << std::endl;
-            return serial_ports; // Return an empty vector if cannot open directory
+            return serial_ports; 
         }
 
         while ((entry = readdir(directory)) != NULL)
         {
             std::string entryName = entry->d_name;
             if (entryName.find(prefix) == 0)
-            { // Check if the entry name starts with the given prefix
+            { 
                 serial_ports.push_back(base_path + entryName);
             }
         }
 
         closedir(directory);
 
-        // Sort the vector in ascending order
-        std::sort(serial_ports.begin(), serial_ports.end());
+        std::reverse(serial_ports.begin(), serial_ports.end());
 
         return serial_ports;
     }
@@ -366,14 +381,7 @@ namespace hightorque_robot
             {
                 std::cout << "Serial Port" << str.size() << " = " << port << std::endl;
                 str.push_back(port);
-                board_port_num = r > board_port_num ? board_port_num : r;
             }
-        }
-
-        if (board_port_num == 0xff)
-        {
-            std::cerr << "Communication board not detected!!!" << std::endl;
-            exit(-1);
         }
 
         const uint8_t port_max_num = board_port_num * CANboard_num;
@@ -615,25 +623,25 @@ namespace hightorque_robot
         }
         std::cout << "-------------------------------------------------" << std::endl;
 
-        if (v_old <= COMBINE_VERSION(3, 9, 1))
+        if (v_old >= COMBINE_VERSION(4, 4, 6))
         {
-            fun_v = fun_v1;
+            fun_v = fun_v5;
         }
-        else if (v_old <= COMBINE_VERSION(4, 2, 0))
-        {
-            fun_v = fun_v2;
-        }
-        else if (v_old <= COMBINE_VERSION(4, 2, 2))
-        {
-            fun_v = fun_v3;
-        }
-        else if (v_old <= COMBINE_VERSION(4, 2, 3))
+        else if (v_old >= COMBINE_VERSION(4, 2, 3))
         {
             fun_v = fun_v4;
         }
+        else if (v_old >= COMBINE_VERSION(4, 2, 2))
+        {
+            fun_v = fun_v3;
+        }
+        else if (v_old >= COMBINE_VERSION(4, 2, 0))
+        {
+            fun_v = fun_v2;
+        }
         else
         {
-            fun_v = fun_vz;
+            fun_v = fun_v1;
         }
 
         for (canboard &cb : CANboards)
@@ -642,6 +650,27 @@ namespace hightorque_robot
         }
 
         std::cout << "fun_v = " << fun_v << std::endl;    
+
+        uint8_t v = 0;
+        uint8_t v2 = 0;
+
+        for (motor *m : Motors)
+        {
+            v = m->get_version().major;
+
+            if (v == 5 && v2 != 0 && v != v2)
+            {
+                ROS_ERROR("The motor version is notInconsistent motor version!!!");
+                exit(-1);
+            }
+
+            v2 = v;
+
+            if (v == 5)
+            {
+                m->set_type(mGeneral);
+            }
+        }
     }
 
 
@@ -777,9 +806,7 @@ void robot::chevk_motor_connection_position()
             {
                 std::cout << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << std::endl;
             }
-            // exit(-1);
-            // ros::Duration(3).sleep();
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
     }
 
@@ -800,6 +827,7 @@ void robot::chevk_motor_connection_position()
         {
             cb.set_reset();
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
 
@@ -821,11 +849,7 @@ void robot::chevk_motor_connection_position()
             int motor_id = Motors[motor]->get_motor_id();
             std::cout << board_id << ", " << port_id << ", " << motor_id << std::endl;
 
-            if (CANPorts[port_id]->set_conf_load(motor_id) != 0)
-            {
-                std::cerr << "Motor " << motor << " settings restoration failed." << std::endl;
-                return;
-            }
+            set_reset();
             
             std::cout << "Motor " << motor << " settings have been successfully restored. Initiating zero position reset." << std::endl;
             if (CANPorts[port_id]->set_reset_zero(motor_id) == 0)
@@ -860,7 +884,7 @@ void robot::chevk_motor_connection_position()
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         // ros::Duration(4).sleep();
-        std::this_thread::sleep_for(std::chrono::seconds(4));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
 
@@ -893,5 +917,16 @@ void robot::chevk_motor_connection_position()
         {
             cb.canboard_bootloader();
         }
+    }
+
+    void robot::canboard_fdcan_reset()
+    {
+        std::cout << "canboard fdcan reset" << std::endl;
+        for (canboard &cb : CANboards)
+        {
+            cb.canboard_fdcan_reset();
+        }
+        // ros::Duration(0.01).sleep();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }

@@ -26,9 +26,10 @@
 #define  MODE_POS_VEL_TQE_KP_KD     0X93
 #define  MODE_POS_VEL_TQE_KP_KI_KD  0X98
 #define  MODE_POS_VEL_KP_KD         0X9E
-#define  MODE_POS_VEL_TQE_RKP_RKD   0XA3
-#define  MODE_POS_VEL_RKP_RKD       0XA8
+// #define  MODE_POS_VEL_TQE_RKP_RKD   0XA3  // 弃用
+// #define  MODE_POS_VEL_RKP_RKD       0XA8  // 弃用
 #define  MODE_POS_VEL_ACC           0XAD
+#define  MODE_POS_VEL_TQE_KP_KD2    0XB0
 
 
 #define  MODE_RESET_ZERO            0X01  // 重置电机零位
@@ -37,13 +38,14 @@
 #define  MODE_BRAKE                 0X04  // 电机刹车
 #define  MODE_SET_NUM               0X05  // 设置通道电机数量，并查询固件版本
 #define  MODE_MOTOR_STATE           0X06  // 电机状态
-#define  MODE_CONF_LOAD             0X07  // 还原设置（从flash重新加载设置）
+// #define  MODE_CONF_LOAD             0X07  // 还原设置（弃用）
 #define  MODE_RESET                 0X08  // 电机重启
 #define  MODE_RUNZERO               0X09  // 上电自动回零
 #define  MODE_MOTOR_STATE2          0X0A  // 电机状态2(带模式和错误码)
 #define  MODE_MOTOR_VERSION         0X0B  // 电机版本号
 #define  MODE_FUN_V                 0X0C  // 设置功能版本号
 #define  MODE_BOOTLOADER            0X0D  // 升级通讯板固件
+#define  MODE_FDCAN_RESET           0X0E  // 重新初始化 FDCAN
 
 
 #define COMBINE_VERSION(major, minor, patch) (((major) << 12) | ((minor) << 4) | (patch))

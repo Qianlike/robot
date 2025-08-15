@@ -16,14 +16,14 @@ namespace hightorque_robot
     {
     private:
         std::string robot_name, Serial_Type, CANboard_type;
-        int CANboard_num, Seial_baudrate, SDK_version;
+        int CANboard_num, Seial_baudrate;
         std::vector<canboard> CANboards;
         std::vector<std::string> str;
-        std::string SDK_version2 = "4.0.3"; // SDK版本
+        std::string SDK_version2 = "4.4.6"; // SDK版本
         std::thread error_check_thread_;
         std::thread pub_thread_;
         fun_version fun_v = fun_v1;
-        float slave_v = 3.0f;
+        float slave_v = 3.0f;  
         int control_type;
         std::shared_ptr<lcm::LCM> lcm_ptr;
         bool lcm_en;
@@ -36,6 +36,8 @@ namespace hightorque_robot
         int motor_torque_limit_flag = 0;
 
         RobotParams robot_params;
+
+        int motor_timeout_ms = 0;
 
         robot();
         ~robot();
@@ -65,6 +67,7 @@ namespace hightorque_robot
         void set_data_reset();
         void canboard_bootloader();
         void lcm_enable();
+        void canboard_fdcan_reset();
     };
 }
 #endif

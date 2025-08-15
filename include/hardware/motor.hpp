@@ -11,38 +11,85 @@
 #define MEM_INDEX_ID(id) ((id) - 1)    
 
 
-enum motor_type
+enum motor_type  // 注释掉的暂无力矩修正系数
 {
-    // null      0,
-    // _5046     1,    // 黑色 圆形
-    // _4538     2,    // 银色 圆形
-    // _5047_36  3, // 5047 双级 36减速比 黑色 方形
-    // _5047_9   4,  // 5047 单级 9减速比 黑色 方形
-    // _4438_32  5, // 4438 双极 32减速比 黑色 方形
-    // _4438_8   6,  // 4438 单极 8减速比 黑色 方形
-    // _7136_7   7,  // 
-
     null = 0,
+    m3536_32,
     m4538_19,
     m5046_20,
     m5047_09,
-    m5047_19,
-    m5047_20,
-    m5047_30,
+    // m5047_19,
+    // m5047_20,
+    // m5047_30,
     m5047_36,
-    m4438_08,
-    m4438_16,
+    // m4438_08,
+    // m4438_16,
     m4438_30,
     m4438_32,
-    m7136_07,
-    m7233_08,
-    m6056_08,
+    // m7136_07,
+    // m7233_08,
+    // m6056_08,
     m6056_36,
-    m3536_32,
+    // m3536_32,
     m5043_20,
-    m5043_35,
+    // m5043_35,
     m7256_35,
-    m6057_36,
+    // m6057_36,
+    m60sg_35,
+    m60bm_35,
+
+    m5047_36_2,
+
+    mGeneral,  // 力矩已在电机内部修正
+};
+
+
+const std::unordered_map<std::string, motor_type> motor_type2 =  // 注释掉的暂无力矩修正系数
+{
+    {"NULL", motor_type::null},
+    {"3536_32", motor_type::m3536_32},
+    {"4538_19", motor_type::m4538_19},
+    {"5046_20", motor_type::m5046_20},
+    {"5047_9", motor_type::m5047_09},
+    // {"5047_19", motor_type::m5047_19},
+    // {"5047_20", motor_type::m5047_20},
+    // {"5047_30", motor_type::m5047_30},
+    {"5047_36", motor_type::m5047_36},    // 老款5047_36力矩系数，
+    // {"4438_8", motor_type::m4438_08},
+    // {"4438_16", motor_type::m4438_16},
+    {"4438_30", motor_type::m4438_30},
+    {"4438_32", motor_type::m4438_32},
+    // {"7136_7", motor_type::m7136_07},
+    // {"7233_8", motor_type::m7233_08},
+    // {"6056_8", motor_type::m6056_08},
+    {"6056_36", motor_type::m6056_36},
+    // {"3536_32", motor_type::m3536_32},
+    {"5043_20", motor_type::m5043_20},
+    // {"5043_35", motor_type::m5043_35},
+    {"7256_35", motor_type::m7256_35},
+    // {"6057_36", motor_type::m6057_36},
+    {"60SG_35", motor_type::m60sg_35},
+    {"60BM_35", motor_type::m60bm_35},
+    {"5047_36_2", motor_type::m5047_36_2},  // 新版5047_36（目前的电机都是新款）的力矩系数，建议新算法的5047_36电机都采用此系数
+    {"General", motor_type::mGeneral},  // 力矩已在电机内部修正
+};
+
+const std::unordered_map<motor_type, float> motor_tqe_adj = 
+{
+    {motor_type::m3536_32,   0.4581f},
+    {motor_type::m5046_20,   0.5280f},
+    {motor_type::m4538_19,   0.4450f},
+    {motor_type::m5047_09,   0.5330f},
+    {motor_type::m5047_36,   0.4938f},
+    {motor_type::m5047_36_2, 0.8030f},
+    {motor_type::m4438_30,   0.5256f},
+    {motor_type::m4438_32,   0.5584f},
+    {motor_type::m6056_36,   0.6770f},
+    {motor_type::m7256_35,   0.6770f},
+    {motor_type::m60sg_35,   0.7942f},
+    {motor_type::m60bm_35,   0.7942f},
+    {motor_type::m5043_20,   0.9660f},
+    {motor_type::mGeneral,   0.5000f}
 };
 
 
@@ -86,8 +133,6 @@ public:
     inline int16_t pos_float2int(float in_data, uint8_t type);
     inline int16_t vel_float2int(float in_data, uint8_t type);
     inline int16_t tqe_float2int(float in_data, motor_type motor_type);
-    inline int16_t rkp_float2int(float in_data, motor_type motor_type);
-    inline int16_t rkd_float2int(float in_data, motor_type motor_type);
     inline float pos_int2float(int16_t in_data, uint8_t type);
     inline float vel_int2float(int16_t in_data, uint8_t type);
     inline float tqe_int2float(int16_t in_data, motor_type type);
@@ -108,11 +153,17 @@ public:
     void set_motorout(int16_t t_ms);
     void pos_vel_MAXtqe(float position, float velocity, float torque_max);
     void pos_vel_tqe_kp_kd(float position, float velocity, float torque, float Kp, float Kd);
+    void pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd);
     void pos_vel_kp_kd(float position, float velocity, float Kp, float Kd);
     void pos_vel_acc(float position, float velocity, float acc);
     void pos_vel_rkp_rkd(float position, float velocity, float rKp, float rKd);
     void pos_vel_kp_ki_kd(float position, float velocity, float torque, float kp, float ki, float kd);
     void pos_vel_tqe_rkp_rkd(float position, float velocity, float torque, float rKp, float rKd);
+
+    void stop();
+    void brake();
+    void reset();
+    void send_state_cmd();
 
     void fresh_data(uint8_t mode, uint8_t fault, int16_t position, int16_t velocity, int16_t torque);
 
@@ -131,5 +182,6 @@ public:
     cdc_rx_motor_version_s& get_version();
     void set_version(cdc_rx_motor_version_s &v);
     void print_version();
+    void set_type(motor_type t);
 };
 #endif

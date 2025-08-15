@@ -28,10 +28,8 @@ struct CANBoardParams {
 };
 
 struct RobotParams {
-    int SDK_version;
+    int motor_timeout_ms;
     std::string robot_name;
-    int arm_dof;
-    int leg_dof;
     std::string Serial_Type;
     int Seial_baudrate;
     std::string CAN_Type;

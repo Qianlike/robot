@@ -176,3 +176,11 @@ void canboard::canboard_bootloader()
 {
     CANport[0]->canboard_bootloader();
 }
+
+void canboard::canboard_fdcan_reset()
+{
+    for (canport *c : CANport)
+    {
+        c->canboard_fdcan_reset();
+    }
+}

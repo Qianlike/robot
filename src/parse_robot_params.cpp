@@ -7,14 +7,12 @@ RobotParams parseRobotParams(const std::string& filePath) {
 
     if (config["robot"]) {
         YAML::Node robotNode = config["robot"];
-        params.SDK_version = robotNode["SDK_version"].as<int>();
         params.robot_name = robotNode["robot_name"].as<std::string>();
-        params.arm_dof = robotNode["arm_dof"].as<int>();
-        params.leg_dof = robotNode["leg_dof"].as<int>();
         params.Serial_Type = robotNode["Serial_Type"].as<std::string>();
         params.Seial_baudrate = robotNode["Seial_baudrate"].as<int>();
         params.CAN_Type = robotNode["CAN_Type"].as<std::string>();
         params.control_type = robotNode["control_type"].as<int>();
+        params.motor_timeout_ms = robotNode["motor_timeout_ms"].as<int>();
         params.CANboard_type = robotNode["CANboard_type"].as<std::string>();
         params.CANboard_num = robotNode["CANboard_num"].as<int>();
 

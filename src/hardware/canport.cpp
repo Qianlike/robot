@@ -125,90 +125,6 @@ float canport::set_motor_num()
 }
 
 
-int canport::set_conf_load()
-{
-    if (cdc_tr_message.head.s.cmd != MODE_CONF_LOAD)
-    {
-        cdc_tr_message.head.s.head = 0XF7;
-        cdc_tr_message.head.s.cmd = MODE_CONF_LOAD;
-        cdc_tr_message.head.s.len = 1;
-        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
-    }
-    cdc_tr_message.data.data[0] = 0x7f;
-
-    int t = 0;
-    int num = 0;
-    int max_delay = 10000;
-    motors_id.clear();
-    mode_flag = 0;
-    while (t++ < max_delay)
-    {
-        motor_send_2();
-        // ros::Duration(0.02).sleep();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        num = 0;
-        if (mode_flag == MODE_CONF_LOAD)
-        {
-            for (int i = 1; i <= motor_num; i++)
-            {
-                int id = port_motor_id[i - 1];
-                if (motors_id.count(id) == 1)
-                {
-                    ++num;
-                }
-            }
-        }
-
-        if (num == motor_num)
-        {
-            break;
-        }
-    }
-
-    if (num == motor_num)
-    {
-        std::cout << "\033[1;32mSettings have been restored. Initiating motor zero point reset.\033[0m" << std::endl;
-        return 0;
-    }
-    else 
-    {
-        std::cerr << "\033[1;31mRestoration of settings failed.\033[0m" << std::endl;
-        return 1;
-    }
-}
-
-
-int canport::set_conf_load(int id)
-{
-    
-    if (cdc_tr_message.head.s.cmd != MODE_CONF_LOAD)
-    {
-        cdc_tr_message.head.s.head = 0XF7;
-        cdc_tr_message.head.s.cmd = MODE_CONF_LOAD;
-        cdc_tr_message.head.s.len = 1;
-        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
-    }
-    cdc_tr_message.data.data[0] = id;
-
-    int t = 0;
-    int max_delay = 10000;
-    motors_id.clear();
-    mode_flag = 0;
-    while (t++ < max_delay)
-    {
-        motor_send_2();
-        // ros::Duration(0.02).sleep();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        if (mode_flag == MODE_CONF_LOAD && motors_id.count(id) == 1)
-        {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-
 int canport::set_reset_zero()
 {
     if (cdc_tr_message.head.s.cmd != MODE_RESET_ZERO)
@@ -304,6 +220,7 @@ void canport::set_stop()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
+    motor_send_2();
 }
 
 
@@ -332,6 +249,9 @@ void canport::set_reset()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
+    motor_send_2();
+    motor_send_2();
+    motor_send_2();
 }
 
 
@@ -557,6 +477,22 @@ void canport::canboard_bootloader()
     {
         cdc_tr_message.head.s.head = 0XF7;
         cdc_tr_message.head.s.cmd = MODE_BOOTLOADER;
+        cdc_tr_message.head.s.len = 1;
+        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
+    }
+    
+    motor_send_2();
+    motor_send_2();
+    motor_send_2();
+}
+
+
+void canport::canboard_fdcan_reset()
+{
+    if (cdc_tr_message.head.s.cmd != MODE_FDCAN_RESET)
+    {
+        cdc_tr_message.head.s.head = 0XF7;
+        cdc_tr_message.head.s.cmd = MODE_FDCAN_RESET;
         cdc_tr_message.head.s.len = 1;
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }

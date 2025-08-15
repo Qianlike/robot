@@ -34,5 +34,6 @@ public:
     void set_time_out(int16_t t_ms);
     void set_time_out(uint8_t portx, int16_t t_ms);
     void canboard_bootloader();
+    void canboard_fdcan_reset();
 };
 #endif

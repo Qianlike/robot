@@ -34,8 +34,6 @@ public:
     // ~canport();
 
     float set_motor_num();
-    int set_conf_load();
-    int set_conf_load(int id);
     int set_reset_zero();
     int set_reset_zero(int id);
     void set_stop();
@@ -55,6 +53,7 @@ public:
     int get_canboard_id();
     int get_canport_id();
     void canboard_bootloader();
+    void canboard_fdcan_reset();
 };
 
 #endif

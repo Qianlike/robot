@@ -4,10 +4,7 @@ int main(int argc, char* argv[]) {
     std::string filePath = "../robot_param/1dof_STM32H730_model_test_Orin_params.yaml";
     RobotParams params = parseRobotParams(filePath);
 
-    std::cout << "SDK Version: " << params.SDK_version << std::endl;
     std::cout << "Robot Name: " << params.robot_name << std::endl;
-    std::cout << "Arm DOF: " << params.arm_dof << std::endl;
-    std::cout << "Leg DOF: " << params.leg_dof << std::endl;
     std::cout << "Serial Type: " << params.Serial_Type << std::endl;
     std::cout << "Serial Baudrate: " << params.Seial_baudrate << std::endl;
     std::cout << "CAN Type: " << params.CAN_Type << std::endl;
