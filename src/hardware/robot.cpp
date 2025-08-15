@@ -384,14 +384,6 @@ namespace hightorque_robot
             }
         }
 
-        const uint8_t port_max_num = board_port_num * CANboard_num;
-        if (str.size() < port_max_num)
-        {
-            std::cout << "port max num = " << static_cast<int>(port_max_num) << std::endl;
-            std::cerr << "The number of detected communication board serial ports is less than expected" << std::endl;
-            exit(-1);
-        }
-
         for(auto board_params: robot_params.CANboards)
         {
             auto cp_num = board_params.second.CANport_num;
