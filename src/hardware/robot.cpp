@@ -18,7 +18,6 @@ namespace hightorque_robot
         robot_name = robot_params.robot_name;
         motor_timeout_ms = robot_params.motor_timeout_ms;
         CANboard_num = robot_params.CANboard_num;
-        CANboard_type = robot_params.CANboard_type;
         Serial_Type = robot_params.Serial_Type;
 
 
@@ -31,7 +30,6 @@ namespace hightorque_robot
         std::cout << "\033[1;32mGot params SDK_version: v" << SDK_version2 << "\033[0m" << std::endl;
         std::cout << "\033[1;32mThe robot name is " << robot_name << "\033[0m" << std::endl;
         std::cout << "\033[1;32mThe robot has " << CANboard_num << " CANboards\033[0m" << std::endl;
-        std::cout << "\033[1;32mThe CANboard type is " << CANboard_type << "\033[0m" << std::endl;
         std::cout << "\033[1;32mThe Serial type is " << Serial_Type << "\033[0m" << std::endl;
 
         init_ser();
@@ -606,7 +604,10 @@ namespace hightorque_robot
         for (motor *m : Motors)
         {
             const auto v = m->get_version();
-            std::cout << "motors[" << std::setw(2) << i++ << "]: id:" << std::setw(2) << v.id << " v" << v.major << "." << v.minor << "." << v.patch << std::endl;
+            // std::cout << "AAAA ";
+            // std::cout << "motors[" << i++ << "]: id:" << v.id << " v" << v.major << "." << v.minor << "." << v.patch << std::endl;;
+            // std::cout << "BBBBB \n";
+            printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i, v.id, v.major, v.minor, v.patch);
             const uint16_t v_new = v.major << 12 | (v.minor << 4) | v.patch;
             if (v_old > v_new && v_new != 0)
             {
@@ -641,7 +642,7 @@ namespace hightorque_robot
             cb.set_fun_v(fun_v);
         }
 
-        std::cout << "fun_v = " << fun_v << std::endl;    
+        // std::cout << "fun_v = " << fun_v << std::endl;    
 
         uint8_t v = 0;
         uint8_t v2 = 0;
@@ -694,7 +695,6 @@ namespace hightorque_robot
         while (t++ < 20)
         {
             send_get_motor_version_cmd();
-            // ros::Duration(0.1).sleep();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
             num = 0;
@@ -737,11 +737,10 @@ namespace hightorque_robot
             {
                 std::cerr << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << std::endl;
             }
-            // exit(-1);
-            // ros::Duration(3).sleep();
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
         motor_version_detection();
+        exit(-1);
     }
 
 

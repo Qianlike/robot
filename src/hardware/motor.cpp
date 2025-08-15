@@ -93,7 +93,6 @@ motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message
     // }
     // if (n.getParam("robot/control_type", control_type))
     // {
-    //     // ROS_INFO("Got params ontrol_type: %f",SDK_version);
     // }
     // else
     // {

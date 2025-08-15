@@ -15,7 +15,7 @@ namespace hightorque_robot
     class robot
     {
     private:
-        std::string robot_name, Serial_Type, CANboard_type;
+        std::string robot_name, Serial_Type;
         int CANboard_num, Seial_baudrate;
         std::vector<canboard> CANboards;
         std::vector<std::string> str;

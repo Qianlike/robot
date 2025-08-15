@@ -1,13 +1,8 @@
 robot:
-  SDK_version: 2
-  robot_name: "HuangPx HECTOR"
-  arm_dof: 4
-  leg_dof: 6
+  robot_name: "mini pai"
   Serial_Type: "/dev/ttyACM"
   Seial_baudrate: 4000000
-  CAN_Type: "CAN-FD BRS" # "CAN-FD"\"CAN-FD BRS"\"CAN 2.0B"
   control_type: 9  # 运行模式
-  CANboard_type: "STM32 H730"
   CANboard_num: 1
   CANboard:
     No_1_CANboard:

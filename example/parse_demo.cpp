@@ -7,9 +7,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Robot Name: " << params.robot_name << std::endl;
     std::cout << "Serial Type: " << params.Serial_Type << std::endl;
     std::cout << "Serial Baudrate: " << params.Seial_baudrate << std::endl;
-    std::cout << "CAN Type: " << params.CAN_Type << std::endl;
     std::cout << "Control Type: " << params.control_type << std::endl;
-    std::cout << "CAN Board Type: " << params.CANboard_type << std::endl;
     std::cout << "CAN Board Num: " << params.CANboard_num << std::endl;
 
     for (const auto& board : params.CANboards) {

@@ -1,14 +1,9 @@
 robot:
-  SDK_version: 2
-  robot_name: "HuangPx HECTOR"
-  arm_dof: 0
-  leg_dof: 6
+  robot_name: "mini pai"
   Serial_Type: "/dev/ttyACM"
   Seial_baudrate: 4000000
-  CAN_Type: "CAN-FD BRS" # "CAN-FD"\"CAN-FD BRS"\"CAN 2.0B"
   control_type: 9  # 运行模式
   motor_timeout_ms: 0  # 设置电机的超时时间（单位：毫秒），取值范围：[0, 32760]，如果电机在指定时间内未接收到新的控制指令，将进入阻尼模式。将此值设为0表示禁用超时时间功能。
-  CANboard_type: "STM32 H730"
   CANboard_num: 1
   CANboard:
     No_1_CANboard:

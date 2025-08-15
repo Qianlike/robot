@@ -32,9 +32,7 @@ struct RobotParams {
     std::string robot_name;
     std::string Serial_Type;
     int Seial_baudrate;
-    std::string CAN_Type;
     int control_type;
-    std::string CANboard_type;
     int CANboard_num;
     std::map<std::string, CANBoardParams> CANboards;
 };

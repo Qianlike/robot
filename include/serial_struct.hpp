@@ -65,7 +65,7 @@ typedef enum
     fun_vz = 99,
 } fun_version;
 
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct 
 {
     int16_t pos;
@@ -193,7 +193,7 @@ typedef struct motor_back_struct
     float torque;
 } motor_back_t;
 
-#pragma pack()
+#pragma pack(pop)
 
 
 #endif
