@@ -17,7 +17,7 @@ serial_driver::serial_driver(std::string *port, uint32_t baudrate)
     }
     catch (const std::exception &e)
     {
-        std::cerr << "\033[1;31mMotor Unable to open port \033[0m" << std::endl; // 打开串口失败，打印信息
+        std::cerr << "\033[1;31m" << "Motor Unable to open port" << "\033[0m" << std::endl;
         this->error_flag = true;
     }
     if (_ser.isOpen())
@@ -80,7 +80,6 @@ void serial_driver::recv_1for6_42()
                             *p_mode_flag = SOF.cmd;
                             for (int i = 0; i < SOF.len; i++)
                             {
-                                // printf("0x%02X ", cdc_rx_message_data.data[i]);
                                 p_motor_id->insert(cdc_rx_message_data.data[i]);
                             }
                             break;
@@ -142,7 +141,7 @@ void serial_driver::recv_1for6_42()
         }
         catch(const std::exception& e)
         {
-            std::cerr << e.what() << '\n';
+            std::cerr << "\033[1;31m" << e.what() << "\033[0m" << '\n';
             _ser.close();
             error_flag = true;
             break;

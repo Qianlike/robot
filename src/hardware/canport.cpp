@@ -5,37 +5,6 @@ canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser) : ser
 {
     canboard_id = _CANboard_num;
     canport_id = _CANport_num;
-    // if (n.getParam("robot/CANboard/No_" + std::to_string(_CANboard_num) + "_CANboard/CANport/CANport_" + std::to_string(_CANport_num) + "/motor_num", motor_num))
-    // {
-    //     // ROS_INFO("Got params motor_num: %d",motor_num);
-    // }
-    // else
-    // {
-    //     ROS_ERROR("Faile to get params motor_num");
-    // }
-
-    // if (PORT_MOTOR_NUM_MAX < motor_num)
-    // {
-    //     ROS_ERROR("Too many motors, Supports up to %d motors, but there are actually %d motors", PORT_MOTOR_NUM_MAX, motor_num);
-    //     exit(-1);
-    // }        
-
-    // for (int i = 1; i <= motor_num; i++)
-    // {
-    //     int temp_id = 0;
-    //     if (n.getParam("robot/CANboard/No_" + std::to_string(_CANboard_num) + "_CANboard/CANport/CANport_" + std::to_string(_CANport_num) + "/motor/motor" + std::to_string(i) + "/id", temp_id))
-    //     {
-    //         port_motor_id.push_back(temp_id);
-    //         if (id_max < temp_id)
-    //         {
-    //             id_max = temp_id;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         ROS_ERROR("Faile to get params id");
-    //     }
-    // }
     for (size_t i = 1; i <= motor_num; i++)
     {
         Motors.push_back(new motor(i, _CANport_num, _CANboard_num, &cdc_tr_message, id_max));
@@ -58,7 +27,7 @@ canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPo
 
     if (PORT_MOTOR_NUM_MAX < motor_num)
     {
-        std::cerr << "\033[1;31mToo many motors, Supports up to " << PORT_MOTOR_NUM_MAX << " motors, but there are actually " << motor_num << " motors\033[0m" << std::endl;
+        std::cerr << "\033[1;31m" << "Too many motors, Supports up to " << PORT_MOTOR_NUM_MAX << " motors, but there are actually " << motor_num << " motors" << "\033[0m" << std::endl;
         exit(-1);
     }        
 
@@ -103,7 +72,6 @@ float canport::set_motor_num()
     while (t++ < MAX_DALAY)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (port_version >= 2)
         {
@@ -118,7 +86,7 @@ float canport::set_motor_num()
     }
     else
     {
-        std::cerr << "\033[1;31mCANboard(" << canboard_id << ") CANport(" << canport_id << ") Connection disconnected!!!\033[0m" << std::endl;
+        std::cerr << "\033[1;31m" << "CANboard(" << canboard_id << ") CANport(" << canport_id << ") Connection disconnected!!!" << "\033[0m" << std::endl;
     }
 
     return port_version;
@@ -144,7 +112,6 @@ int canport::set_reset_zero()
     while (t++ < max_delay)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         num = 0;
         if (mode_flag == MODE_RESET_ZERO)
@@ -173,7 +140,7 @@ int canport::set_reset_zero()
     }
     else 
     {
-        std::cerr << "\033[1;31mMotor reset to zero position failed.\033[0m" << std::endl;
+        std::cerr << "\033[1;31m" << "Motor reset to zero position failed." << "\033[0m" << std::endl;
         return 1;
     }
 }
@@ -198,7 +165,6 @@ int canport::set_reset_zero(int id)
     while (t++ < max_delay)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (mode_flag == MODE_RESET_ZERO && motors_id.count(id) == 1)
         {
@@ -275,7 +241,6 @@ void canport::set_conf_write()
     while (t++ < max_delay)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         num = 0;
         if (mode_flag == MODE_CONF_WRITE)
@@ -302,7 +267,7 @@ void canport::set_conf_write()
     }
     else 
     {
-        std::cerr << "\033[1;31mFailed to save settings.\033[0m" << std::endl;
+        std::cerr << "\033[1;31m" << "Failed to save settings." << "\033[0m" << std::endl;
         exit(-1);
     }
 }
@@ -327,7 +292,6 @@ int canport::set_conf_write(int id)
     while (t++ < max_delay)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (mode_flag == MODE_CONF_WRITE && motors_id.count(id) == 1)
         {
@@ -397,7 +361,6 @@ void canport::set_fun_v(fun_version v)
     while (t++ < MAX_DALAY)
     {
         motor_send_2();
-        // ros::Duration(0.02).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (v == fun_v)
         {
@@ -408,7 +371,7 @@ void canport::set_fun_v(fun_version v)
 
     if (t == MAX_DALAY)
     {
-        std::cerr << "\033[1;31mCANboard(" << canboard_id << ") CANport(" << canport_id << ") fun_v err!!!\033[0m" << std::endl;
+        std::cerr << "\033[1;31m" << "CANboard(" << canboard_id << ") CANport(" << canport_id << ") fun_v err!!!" << "\033[0m" << std::endl;
     }
 }
 

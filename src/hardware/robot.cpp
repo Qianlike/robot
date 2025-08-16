@@ -46,7 +46,6 @@ namespace hightorque_robot
         }
         for (canport *cp : CANPorts)
         {
-            // std::thread(&canport::send, &cp);
             cp->puch_motor(&Motors);
         }
         set_port_motor_num(); // 设置通道上挂载的电机数，并获取主控板固件版本号
@@ -80,10 +79,6 @@ namespace hightorque_robot
 
         std::cout << "\033[1;32mThe robot has " << Motors.size() << " motors\033[0m" << std::endl;
         std::cout << "robot init" << std::endl;
-        // for (motor m:Motors)
-        // {
-        //     std::cout<<m.get_motor_belong_canboard()<<" "<<m.get_motor_belong_canport()<<" "<<m.get_motor_id()<<std::endl;
-        // }
     }
     robot::~robot()
     {
@@ -117,7 +112,7 @@ namespace hightorque_robot
             lcm_ptr = std::make_shared<lcm::LCM>("udpm://239.255.76.67:7667?ttl=0");
             if (!lcm_ptr->good())
             {
-                std::cerr << "LCM init error" << std::endl;
+                std::cerr << "\033[1;31m" << "LCM init error" << "\033[0m" << std::endl;
             }
             else
             {
@@ -222,7 +217,7 @@ namespace hightorque_robot
             {
                 if(m->pos_limit_flag)
                 {                    
-                    std::cerr << "\033[1;31mrobot pos limit, motor stop.\033[0m" << std::endl;
+                    std::cerr << "\033[1;31m" << "robot pos limit, motor stop." << "\033[0m" << std::endl;
                     set_stop();
                     motor_position_limit_flag = m->pos_limit_flag;
                     break;
@@ -230,7 +225,7 @@ namespace hightorque_robot
 
                 if(m->tor_limit_flag)
                 {
-                    std::cerr << "\033[1;31mrobot torque limit, motor stop.\033[0m" << std::endl;
+                    std::cerr << "\033[1;31m" << "robot torque limit, motor stop." << "\033[0m" << std::endl;
                     set_stop();
                     motor_torque_limit_flag = m->tor_limit_flag;
                     break;
@@ -273,7 +268,7 @@ namespace hightorque_robot
         }
         catch(const std::exception& e)
         {
-            std::cerr << e.what() << '\n';
+            std::cerr << "\033[1;31m" << e.what() << "\033[0m" << '\n';
             sp_close(port);
             sp_free_port(port);
         }
@@ -300,10 +295,8 @@ namespace hightorque_robot
                     switch (vid)
                     {
                     case (0xCAF1):
-                        r = 4;
-                        break;
                     case (0xCAE1):
-                        r = 7;
+                        r = 1;
                         break;
                     default:
                         r = -3;
@@ -343,7 +336,7 @@ namespace hightorque_robot
         directory = opendir(base_path.c_str());
         if (!directory)
         {
-            std::cerr << "Could not open the directory " << base_path << std::endl;
+            std::cerr << "\033[1;31m << Could not open the directory " << base_path << "\033[0m" << std::endl;
             return serial_ports; 
         }
 
@@ -584,7 +577,7 @@ namespace hightorque_robot
     {
         if (slave_v < 4.0f)
         {
-            std::cerr << "The current communication board does not support this function!!!" << std::endl;
+            std::cerr << "\033[1;31m << The current communication board does not support this function!!! << \033[0m" << std::endl;
             exit(-1);
         }
 
@@ -604,9 +597,6 @@ namespace hightorque_robot
         for (motor *m : Motors)
         {
             const auto v = m->get_version();
-            // std::cout << "AAAA ";
-            // std::cout << "motors[" << i++ << "]: id:" << v.id << " v" << v.major << "." << v.minor << "." << v.patch << std::endl;;
-            // std::cout << "BBBBB \n";
             printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i, v.id, v.major, v.minor, v.patch);
             const uint16_t v_new = v.major << 12 | (v.minor << 4) | v.patch;
             if (v_old > v_new && v_new != 0)
@@ -735,12 +725,11 @@ namespace hightorque_robot
         {
             for (int i = 0; i < Motors.size() - num; i++)
             {
-                std::cerr << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << std::endl;
+                std::cerr << "\033[1;31m" << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << "\033[0m" << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
         motor_version_detection();
-        exit(-1);
     }
 
 
@@ -755,7 +744,6 @@ void robot::chevk_motor_connection_position()
         while (t++ < 2000)
         {
             send_get_motor_state_cmd();
-            // ros::Duration(0.001).sleep();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
             num = 0;
@@ -795,7 +783,7 @@ void robot::chevk_motor_connection_position()
         {
             for (int i = 0; i < Motors.size() - num; i++)
             {
-                std::cout << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << std::endl;
+                std::cerr << "\033[1;31m" << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << "\033[0m" << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
@@ -852,7 +840,7 @@ void robot::chevk_motor_connection_position()
                 }
                 else
                 {
-                    std::cerr << "Motor " << motor << " settings saved failed." << std::endl;
+                    std::cerr << "\033[1;31m << Motor " << motor << " settings saved failed. << \033[0m" << std::endl;
                 }
             }
             else
@@ -871,10 +859,8 @@ void robot::chevk_motor_connection_position()
             {
                 cb.set_motor_runzero();
             }
-            // ros::Duration(0.01).sleep();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        // ros::Duration(4).sleep();
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
@@ -887,7 +873,6 @@ void robot::chevk_motor_connection_position()
             {
                 cb.set_time_out(t_ms);
             }
-            // ros::Duration(0.01).sleep();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
@@ -897,7 +882,6 @@ void robot::chevk_motor_connection_position()
         for (int i = 0; i < 5; i++)
         {
             CANboards[0].set_time_out(portx, t_ms);
-            // ros::Duration(0.01).sleep();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
@@ -917,7 +901,6 @@ void robot::chevk_motor_connection_position()
         {
             cb.canboard_fdcan_reset();
         }
-        // ros::Duration(0.01).sleep();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
