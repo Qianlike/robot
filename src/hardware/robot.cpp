@@ -33,6 +33,7 @@ namespace hightorque_robot
         std::cout << "\033[1;32mThe Serial type is " << Serial_Type << "\033[0m" << std::endl;
 
         init_ser();
+        error_check_flag = true;
         error_check_thread_ = std::thread(&robot::check_error, this);
         auto it = robot_params.CANboards.begin();
         for (size_t i = 1; i <= CANboard_num; i++, it++)
@@ -71,21 +72,32 @@ namespace hightorque_robot
         }
         
         send_get_motor_state_cmd();
-        
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         this->lcm_en = false;
 
         std::cout << "\033[1;32mThe robot has " << Motors.size() << " motors\033[0m" << std::endl;
         std::cout << "robot init" << std::endl;
     }
+
+
     robot::~robot()
     {
         // publish_joint_state=0;
         set_reset();
         set_reset();
         set_reset();
+
+        // 关键修复：先关闭所有串口，中断阻塞的读取
+        for (serial_driver *s : ser)
+        {
+            if (s) 
+            {
+                s->set_run_flag(false);
+                s->close();  // 添加这一行！
+            }
+        }
+
         for (auto &thread : ser_recv_threads)
         {
             if (thread.joinable())
@@ -96,7 +108,7 @@ namespace hightorque_robot
         {
             pub_thread_.join(); 
         }
-
+        error_check_flag = false;
         if(error_check_thread_.joinable())
         {
             error_check_thread_.join(); 
@@ -402,7 +414,7 @@ namespace hightorque_robot
     void robot::check_error(void)
     {
         std::mutex robot_mutex;
-        while(true)
+        while(error_check_flag)
         {
             static error_run_state_e last_error_run_state = error_reconnect;
             static error_run_state_e error_run_state = error_check;// 0：正常，1：报错,清理，2：重连
@@ -469,7 +481,7 @@ namespace hightorque_robot
                     {
                         std::cout << "file all diveces" << std::endl;
                         error_run_state = error_reconnect;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     }
                 }
                 break;
@@ -477,9 +489,10 @@ namespace hightorque_robot
                 {
                     std::cerr << "\033[1;31mreconnect start \033[0m" << std::endl;
                     this->init_ser();
-                    for (size_t i = 1; i <= CANboard_num; i++)
+                    auto it = robot_params.CANboards.begin();
+                    for (size_t i = 1; i <= CANboard_num; i++, it++)
                     {
-                        CANboards.push_back(canboard(i, &ser));
+                        CANboards.push_back(canboard(i, &ser, it->second));
                     }
 
                     for (canboard &cb : CANboards)
@@ -500,7 +513,13 @@ namespace hightorque_robot
                 default:
                 break;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::unique_lock<std::mutex> lock(error_check_mutex);
+            if (error_check_cv.wait_for(lock, std::chrono::milliseconds(1000), 
+                [this]{ return !error_check_flag; })) {
+                // 收到退出信号，立即退出
+                break;
+            }
             // only state chaged, print state.
             if(error_run_state != last_error_run_state)
             {
@@ -555,7 +574,7 @@ namespace hightorque_robot
                 cb.send_get_motor_state_cmd2();
             }
         }
-        else if (fun_v >= fun_v2 || control_type == 0)
+        else if (fun_v >= fun_v2)
         {
             for (canboard &cb : CANboards)
             {
@@ -597,7 +616,7 @@ namespace hightorque_robot
         for (motor *m : Motors)
         {
             const auto v = m->get_version();
-            printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i, v.id, v.major, v.minor, v.patch);
+            printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i++, v.id, v.major, v.minor, v.patch);
             const uint16_t v_new = v.major << 12 | (v.minor << 4) | v.patch;
             if (v_old > v_new && v_new != 0)
             {
@@ -727,7 +746,7 @@ namespace hightorque_robot
             {
                 std::cerr << "\033[1;31m" << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << "\033[0m" << std::endl;
             }
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            std::this_thread::sleep_for(std::chrono::seconds(3));
         }
         motor_version_detection();
     }
@@ -785,7 +804,7 @@ void robot::chevk_motor_connection_position()
             {
                 std::cerr << "\033[1;31m" << "CANboard(" << board[i] << ") CANport(" << port[i] << ") id(" << id[i] << ") Motor connection disconnected!!!" << "\033[0m" << std::endl;
             }
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            std::this_thread::sleep_for(std::chrono::seconds(3));
         }
     }
 

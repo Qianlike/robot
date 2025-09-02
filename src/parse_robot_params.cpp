@@ -1,52 +1,119 @@
 #include <iostream>
 #include "parse_robot_params.hpp"
 
-RobotParams parseRobotParams(const std::string& filePath) {
+
+static void printParams(const RobotParams &params)
+{
+    for (const auto &boardEntry : params.CANboards)
+    {
+        std::cout << "CAN Board Name: " << boardEntry.first << std::endl;
+        const CANBoardParams &board = boardEntry.second;
+        std::cout << "  CAN Port Num: " << board.CANport_num << std::endl;
+        for (const auto &portEntry : board.CANports)
+        {
+            std::cout << "  CAN Port Name: " << portEntry.first << std::endl;
+            const CANPortParams &port = portEntry.second;
+            std::cout << "    Serial ID: " << port.serial_id << std::endl;
+            std::cout << "    Motor Num: " << port.motor_num << std::endl;
+            for (const auto &motorEntry : port.motors)
+            {
+                const MotorParams &motor = motorEntry.second;
+                std::cout << "      Type: " << motor.type << std::endl;
+                std::cout << "      ID: " << motor.id << std::endl;
+                std::cout << "      Name: " << motor.name << std::endl;
+                std::cout << "      Num: " << motor.num << std::endl;
+                std::cout << "      Position Limit Enabled: " << (motor.pos_limit_enable ? "True" : "False") << std::endl;
+                std::cout << "      Position Upper Limit: " << motor.pos_upper << std::endl;
+                std::cout << "      Position Lower Limit: " << motor.pos_lower << std::endl;
+                std::cout << "      Torque Limit Enabled: " << (motor.tor_limit_enable ? "True" : "False") << std::endl;
+                std::cout << "      Torque Upper Limit: " << motor.tor_upper << std::endl;
+                std::cout << "      Torque Lower Limit: " << motor.tor_lower << std::endl;
+            }
+        }
+    }
+}
+
+template <typename T>
+void readConfigParam(const YAML::Node &node, const std::string &key, T &value)
+{
+    if (node[key])
+    {
+        try
+        {
+            value = node[key].as<T>();
+            // std::cout << key << ": " << value << std::endl;
+        }
+        catch (const YAML::BadConversion &e)
+        {
+            std::cerr << "\033[1;31m" << "Error: Failed to convert '" << key << "' to the required type: " << e.what() << "\033[0m" << std::endl;
+            exit(-1);
+        }
+    }
+    else
+    {
+        std::cerr << "\033[1;31m" << "Error: '" << key << "' is missing in configuration file." << "\033[0m" << std::endl;
+        exit(-1);
+    }
+}
+
+
+RobotParams parseRobotParams(const std::string &filePath)
+{
     RobotParams params;
     YAML::Node config = YAML::LoadFile(filePath);
 
-    if (config["robot"]) {
+    if (config["robot"])
+    {
         YAML::Node robotNode = config["robot"];
-        params.robot_name = robotNode["robot_name"].as<std::string>();
-        params.Serial_Type = robotNode["Serial_Type"].as<std::string>();
-        params.Seial_baudrate = robotNode["Seial_baudrate"].as<int>();
-        params.control_type = robotNode["control_type"].as<int>();
-        params.motor_timeout_ms = robotNode["motor_timeout_ms"].as<int>();
-        params.CANboard_num = robotNode["CANboard_num"].as<int>();
+        readConfigParam(robotNode, "robot_name", params.robot_name);
+        readConfigParam(robotNode, "Serial_Type", params.Serial_Type);
+        readConfigParam(robotNode, "Seial_baudrate", params.Seial_baudrate);
+        readConfigParam(robotNode, "motor_timeout_ms", params.motor_timeout_ms);
+        readConfigParam(robotNode, "CANboard_num", params.CANboard_num);
 
-        if (robotNode["CANboard"]) {
+
+        if (robotNode["CANboard"])
+        {
             YAML::Node CANboardNode = robotNode["CANboard"];
-            for (YAML::const_iterator it = CANboardNode.begin(); it != CANboardNode.end(); ++it) {
+            int board_num = 0;
+            for (YAML::const_iterator it = CANboardNode.begin(); it != CANboardNode.end() && board_num < params.CANboard_num; ++it, ++board_num)
+            {
                 std::string boardName = it->first.as<std::string>();
                 YAML::Node boardNode = it->second;
                 CANBoardParams board;
-                board.CANport_num = boardNode["CANport_num"].as<int>();
+                readConfigParam(boardNode, "CANport_num", board.CANport_num);
 
-                if (boardNode["CANport"]) {
+                if (boardNode["CANport"])
+                {
                     YAML::Node CANportNode = boardNode["CANport"];
-                    for (YAML::const_iterator portIt = CANportNode.begin(); portIt != CANportNode.end(); ++portIt) {
+                    int port_num = 0;
+                    for (YAML::const_iterator portIt = CANportNode.begin(); portIt != CANportNode.end() && port_num < board.CANport_num; ++portIt, ++port_num)
+                    {
                         std::string portName = portIt->first.as<std::string>();
                         YAML::Node portNode = portIt->second;
                         CANPortParams port;
-                        port.serial_id = portNode["serial_id"].as<int>();
-                        port.motor_num = portNode["motor_num"].as<int>();
+                        readConfigParam(portNode, "serial_id", port.serial_id);
+                        readConfigParam(portNode, "motor_num", port.motor_num);
 
-                        if (portNode["motor"]) {
+                        if (portNode["motor"])
+                        {
                             YAML::Node motorNode = portNode["motor"];
-                            for (YAML::const_iterator motorIt = motorNode.begin(); motorIt != motorNode.end(); ++motorIt) {
+                            int motor_num = 0;
+                            for (YAML::const_iterator motorIt = motorNode.begin(); motorIt != motorNode.end() && motor_num < port.motor_num; ++motorIt, ++motor_num)
+                            {
                                 std::string motorName = motorIt->first.as<std::string>();
                                 YAML::Node motorData = motorIt->second;
                                 MotorParams motor;
-                                motor.type = motorData["type"].as<std::string>();
-                                motor.id = motorData["id"].as<int>();
-                                motor.name = motorData["name"].as<std::string>();
-                                motor.num = motorData["num"].as<int>();
-                                motor.pos_limit_enable = motorData["pos_limit_enable"].as<bool>();
-                                motor.pos_upper = motorData["pos_upper"].as<double>();
-                                motor.pos_lower = motorData["pos_lower"].as<double>();
-                                motor.tor_limit_enable = motorData["tor_limit_enable"].as<bool>();
-                                motor.tor_upper = motorData["tor_upper"].as<double>();
-                                motor.tor_lower = motorData["tor_lower"].as<double>();
+                                readConfigParam(motorData, "type", motor.type);
+                                readConfigParam(motorData, "id", motor.id);
+                                readConfigParam(motorData, "name", motor.name);
+                                readConfigParam(motorData, "num", motor.num);
+                                readConfigParam(motorData, "pos_limit_enable", motor.pos_limit_enable);
+                                readConfigParam(motorData, "pos_upper", motor.pos_upper);
+                                readConfigParam(motorData, "pos_lower", motor.pos_lower);
+                                readConfigParam(motorData, "tor_limit_enable", motor.tor_limit_enable);
+                                readConfigParam(motorData, "tor_upper", motor.tor_upper);
+                                readConfigParam(motorData, "tor_lower", motor.tor_lower);
                                 port.motors[motorName] = motor;
                             }
                         }
@@ -57,6 +124,8 @@ RobotParams parseRobotParams(const std::string& filePath) {
             }
         }
     }
+
+    // printParams(params);
 
     return params;
 }

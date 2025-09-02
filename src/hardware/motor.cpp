@@ -2,18 +2,6 @@
 #include <iostream>
 
 
-motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message_s *_p_cdc_tx_message, int _id_max)
-: CANport_num(_CANport_num), CANboard_num(_CANboard_num), p_cdc_tx_message(_p_cdc_tx_message), id_max(_id_max)
-{
-    set_motor_type(type);
-    data.time = 0;
-    data.ID = id;
-    data.mode = 0;
-    data.fault = 0;
-    data.position = 999.0f;
-    data.velocity = 0;
-    data.torque = 0;
-}
 
 
 motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message_s *_p_cdc_tx_message, int _id_max, MotorParams &motor_params)
@@ -21,7 +9,6 @@ motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message
 {
     motor_name = motor_params.name;
     id = motor_params.id;
-    type = motor_type2.at(motor_params.type);
     num = motor_params.num;
     pos_limit_enable = motor_params.pos_limit_enable;
     pos_upper = motor_params.pos_upper;
@@ -29,7 +16,9 @@ motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message
     tor_limit_enable = motor_params.tor_limit_enable;
     tor_upper = motor_params.tor_upper;
     tor_lower = motor_params.tor_lower;
-    set_motor_type(type);
+
+
+    set_motor_type(motor_params.type);
     data.time = 0;
     data.ID = id;
     data.mode = 0;
@@ -228,54 +217,6 @@ inline float motor::vel_int2float(int16_t in_data, uint8_t type)
         return (float)(in_data / 4000.0);
     default:
         return float();
-    }
-}
-
-
-void motor::fresh_cmd_int16(float position, float velocity, float torque, float kp, float ki, float kd, float acc, float voltage, float current)
-{
-    switch (control_type)
-    {
-    case (1):
-        motor::position(position);
-        break;
-    case (2):
-        motor::velocity(velocity);
-        break;
-    case (3):
-        motor::torque(torque);
-        break;
-    case (4):
-        motor::voltage(voltage);
-        break;
-    case (5):
-        motor::current(current);
-        break;
-    case (6):
-        motor::pos_vel_MAXtqe(position, velocity, torque);
-        break;
-    case (7):
-        ROS_ERROR("This mode has beenThis mode is deprecated.");
-        exit(-1);
-    case (8):
-        ROS_ERROR("This mode has beenThis mode is deprecated.");
-        exit(-1);
-    case (9):
-        motor::pos_vel_tqe_kp_kd(position, velocity, torque, kp, kd);
-        break;
-    case (10):
-        motor::pos_vel_kp_kd(position, velocity, kp, kd);
-        break;
-    case (11):
-        motor::pos_vel_acc(position, velocity, acc);
-        break;
-    case (12):
-        motor::pos_vel_tqe_kp_kd2(position, velocity, torque, kp, kd);
-        break;
-    default:
-        ROS_ERROR("Incorrect setting of operation mode.");
-        exit(-3);
-        break;
     }
 }
 
@@ -597,20 +538,24 @@ void motor::fresh_data(uint8_t mode, uint8_t fault, int16_t position, int16_t ve
 }
 
 
-/***
- * @brief setting motor type
- * @param type correspond to  different motor type 0~null 1~5046 2~5047_36减速比 3~5047_9减速比
- */
-void motor::set_motor_type(size_t type)
+void motor::set_motor_type(std::string type_str)
 {
-    type_ = static_cast<motor_type>(type);
-    // std::cout << "type_:" << type_ << std::endl;
-}
+    try 
+    {
+        type_ = motor_type2.at(type_str);
+    } 
+    catch (const std::out_of_range& e) 
+    {
+        ROS_ERROR("Motor model error: %s", type_str.c_str());
 
-
-void motor::set_motor_type(motor_type type)
-{
-    type_ = type;
+        std::cout << "----------------Supported motor models are:-------------------" << std::endl;
+        for (auto it = motor_type2.begin(); it != motor_type2.end(); ++it)
+        {
+            std::cout << it->first << std::endl;
+        }
+        std::cout << "--------------------------------------------------------------" << std::endl;
+        exit(-1); 
+    }
 }
 
 
@@ -622,7 +567,7 @@ int motor::get_motor_id()
 
 int motor::get_motor_type() 
 { 
-    return type; 
+    return type_; 
 }
 
 

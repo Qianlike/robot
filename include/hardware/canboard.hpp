@@ -13,7 +13,6 @@ private:
     std::vector<canport*> CANport;
 
 public:
-    canboard(int _CANboard_ID, std::vector<serial_driver *> *ser);
     canboard(int _CANboard_ID, std::vector<serial_driver *> *ser, CANBoardParams &canboard_params);
     ~canboard() {}
 

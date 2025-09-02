@@ -1,14 +1,6 @@
 #include "canboard.hpp"
 
 
-canboard::canboard(int _CANboard_ID, std::vector<serial_driver *> *ser)
-{
-    for (size_t j = 1; j <= CANport_num; j++) // 一个串口对应一个CANport
-    {
-        CANport.push_back(new canport(j, _CANboard_ID, (*ser)[(_CANboard_ID - 1) * CANport_num + j - 1]));
-    }
-}
-
 canboard::canboard(int _CANboard_ID, std::vector<serial_driver *> *ser, CANBoardParams &canboard_params)
 {   
     auto it = canboard_params.CANports.begin();
@@ -137,6 +129,7 @@ void canboard::set_reset_zero()
         std::this_thread::sleep_for(std::chrono::seconds(1));
         if (c->set_reset_zero() == 0)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             c->set_conf_write();
         }
         c->set_reset();

@@ -1,23 +1,7 @@
 #include "canport.hpp"
 #include <chrono>
 #include <thread>
-canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser) : ser(_ser)
-{
-    canboard_id = _CANboard_num;
-    canport_id = _CANport_num;
-    for (size_t i = 1; i <= motor_num; i++)
-    {
-        Motors.push_back(new motor(i, _CANport_num, _CANboard_num, &cdc_tr_message, id_max));
-    }
-    for (motor *m : Motors)
-    {
-        Map_Motors_p.insert(std::pair<int, motor *>(m->get_motor_id(), m));
-    }
-    ser->init_map_motor(&Map_Motors_p);
-    ser->port_version_init(&port_version);
-    ser->port_motors_id_init(&motors_id, &mode_flag);
-    ser->port_fun_v_init(&fun_v);
-}
+
 
 canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams &canport_params) : ser(_ser)
 {
@@ -75,7 +59,7 @@ float canport::set_motor_num()
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (port_version >= 2)
         {
-            // ROS_INFO("\033[1;32m ttt %d\033[0m", t);
+            // printf("\033[1;32m ttt %d\033[0m", t);
             break;
         }
     }
@@ -364,7 +348,7 @@ void canport::set_fun_v(fun_version v)
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (v == fun_v)
         {
-            // ROS_INFO("\033[1;32m ttt %d\033[0m", t);
+            // printf("\033[1;32m ttt %d\033[0m", t);
             break;
         }
     }

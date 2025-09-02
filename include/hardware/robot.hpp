@@ -19,12 +19,14 @@ namespace hightorque_robot
         int CANboard_num, Seial_baudrate;
         std::vector<canboard> CANboards;
         std::vector<std::string> str;
-        std::string SDK_version2 = "4.4.6"; // SDK版本
+        std::string SDK_version2 = "4.4.7"; // SDK版本
+        std::condition_variable error_check_cv;
+        std::mutex error_check_mutex;
+        bool error_check_flag = false;
         std::thread error_check_thread_;
         std::thread pub_thread_;
         fun_version fun_v = fun_v1;
         float slave_v = 3.0f;  
-        int control_type;
         std::shared_ptr<lcm::LCM> lcm_ptr;
         bool lcm_en;
     public:

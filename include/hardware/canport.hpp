@@ -29,9 +29,7 @@ private:
     std::vector<cdc_rx_motor_version_s *> motor_version;
 
 public:
-    canport(int _CANport_num, int _CANboard_num, serial_driver *_ser);
     canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams& canport_params);
-    // ~canport();
 
     float set_motor_num();
     int set_reset_zero();

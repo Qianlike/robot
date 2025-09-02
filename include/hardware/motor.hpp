@@ -106,13 +106,12 @@ extern const std::unordered_map<std::string, motor_type> motor_type2;
 class motor
 {
 private:
-    int type, id, num, CANport_num, CANboard_num;
+    int id, num, CANport_num, CANboard_num;
     motor_back_t data;
     std::string motor_name;
     motor_type type_ = motor_type::null;
     cdc_tr_message_s *p_cdc_tx_message = NULL;
     int id_max = 0;
-    int control_type = 0;
     pos_vel_convert_type pos_vel_type = radian_2pi; 
     bool pos_limit_enable = false; 
     float pos_upper = 0.0f;
@@ -126,7 +125,7 @@ public:
     motor_pos_val_tqe_rpd_s cmd_int16_5param;
     int pos_limit_flag = 0;     // 0 表示正常，1 表示超出上限， -1 表示超出下限
     int tor_limit_flag = 0;     // 0 表示正常，1 表示超出上限
-    motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message_s *_p_cdc_tx_message, int _id_max);
+
     motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message_s *_p_cdc_tx_message, int _id_max, MotorParams &motor_params);
     ~motor() {}
 
@@ -141,9 +140,6 @@ public:
     inline int16_t ki_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t kd_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t int16_limit(int32_t data);
-
-
-    void fresh_cmd_int16(float position, float velocity, float torque, float kp, float ki, float kd, float acc, float voltage, float current);
 
     void position(float position);
     void velocity(float velocity);
@@ -171,8 +167,7 @@ public:
     int get_motor_type();
     motor_type get_motor_enum_type();
     int get_motor_num();
-    void set_motor_type(size_t type);
-    void set_motor_type(motor_type type);
+    void set_motor_type(std::string type_str);
     int get_motor_belong_canport();
     int get_motor_belong_canboard();
     motor_pos_val_tqe_rpd_s *return_pos_val_tqe_rpd_p();
