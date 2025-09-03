@@ -14,13 +14,11 @@ int main(int argc, char **argv)
         {
             if(i < (int)motor_num/2)
             {
-                rb.Motors[i]->pos_vel_MAXtqe(angle, 0.1, 10);  // 这里为了方便出厂测试，直接使用了 pos_vel_MAXtqe 函数（不推荐）
-                // rb.Motors[i]->fresh_cmd_int16(0, 0, 0, 0, 0, 0, 0, 0, 0);
+                rb.Motors[i]->pos_vel_MAXtqe(angle, 0.1, 10);
             }
             else
             {
-                rb.Motors[i]->pos_vel_MAXtqe(-angle, 0.1, 10);  // 这里为了方便出厂测试，直接使用了 pos_vel_MAXtqe 函数（不推荐）
-                // rb.Motors[i]->fresh_cmd_int16(0, 0, 0, 0, 0, 0, 0, 0, 0);
+                rb.Motors[i]->pos_vel_MAXtqe(-angle, 0.1, 10);
             }
         }
         cont++;

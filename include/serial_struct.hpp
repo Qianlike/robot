@@ -69,49 +69,39 @@ typedef enum
 typedef struct 
 {
     int16_t pos;
-    int16_t val;
+    int16_t vel;
     int16_t tqe;
-} motor_pos_val_tqe_s;
+} motor_pos_vel_tqe_s;
 
 typedef struct 
 {
     int16_t pos;
-    int16_t val;
-    int16_t tqe;
-    int16_t rkp;
-    int16_t rkd;
-} motor_pos_val_tqe_rpd_s;
-
-typedef struct 
-{
-    int16_t pos;
-    int16_t val;
+    int16_t vel;
     int16_t tqe;
     int16_t kp;
-    int16_t ki;
     int16_t kd;
-} motor_pos_val_tqe_pid_s;
+} motor_pos_vel_tqe_kp_kd_s;
 
 typedef struct 
 {
     int16_t pos;
-    int16_t val;
-    int16_t rkp;
-    int16_t rkd;
-} motor_pos_val_rpd_s;
+    int16_t vel;
+    int16_t kp;
+    int16_t kd;
+} motor_pos_vel_kp_kd_s;
 
 typedef struct 
 {
     int16_t pos;
-    int16_t val;
+    int16_t vel;
     int16_t acc;
-} motor_pos_val_acc_s;
+} motor_pos_vel_acc_s;
 
 typedef struct 
 {
     uint8_t id;
     int16_t pos;
-    int16_t val;
+    int16_t vel;
     int16_t tqe;
 } cdc_rx_motor_state_s;
 
@@ -121,7 +111,7 @@ typedef struct
     uint8_t mode;
     uint8_t fault;
     int16_t pos;
-    int16_t val;
+    int16_t vel;
     int16_t tqe;
 } cdc_rx_motor_state2_s;
 
@@ -163,10 +153,10 @@ typedef struct
         int16_t voltage[CDC_TR_MESSAGE_DATA_LEN / sizeof(int16_t)];
         int16_t current[CDC_TR_MESSAGE_DATA_LEN / sizeof(int16_t)];
         int16_t timeout[CDC_TR_MESSAGE_DATA_LEN / sizeof(int16_t)];
-        motor_pos_val_tqe_s pos_val_tqe[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_val_tqe_s)];
-        motor_pos_val_tqe_rpd_s pos_val_tqe_rpd[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_val_tqe_rpd_s)];
-        motor_pos_val_rpd_s pos_val_rpd[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_val_rpd_s)];
-        motor_pos_val_acc_s pos_val_acc[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_val_acc_s)];
+        motor_pos_vel_tqe_s pos_vel_tqe[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_vel_tqe_s)];
+        motor_pos_vel_tqe_kp_kd_s pos_vel_tqe_kp_kd[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_vel_tqe_kp_kd_s)];
+        motor_pos_vel_kp_kd_s pos_vel_kp_kd[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_vel_kp_kd_s)];
+        motor_pos_vel_acc_s pos_vel_acc[CDC_TR_MESSAGE_DATA_LEN / sizeof(motor_pos_vel_acc_s)];
         cdc_rx_motor_state_s motor_state[CDC_TR_MESSAGE_DATA_LEN / sizeof(cdc_rx_motor_state_s)];
         cdc_rx_motor_state2_s motor_state2[CDC_TR_MESSAGE_DATA_LEN / sizeof(cdc_rx_motor_state2_s)];
         cdc_rx_motor_version_s motor_version[CDC_TR_MESSAGE_DATA_LEN / sizeof(cdc_rx_motor_version_s)];

@@ -122,7 +122,7 @@ private:
     cdc_rx_motor_version_s version = {0};
 
 public:
-    motor_pos_val_tqe_rpd_s cmd_int16_5param;
+    motor_pos_vel_tqe_kp_kd_s cmd_int16_5param;
     int pos_limit_flag = 0;     // 0 表示正常，1 表示超出上限， -1 表示超出下限
     int tor_limit_flag = 0;     // 0 表示正常，1 表示超出上限
 
@@ -152,9 +152,7 @@ public:
     void pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd);
     void pos_vel_kp_kd(float position, float velocity, float Kp, float Kd);
     void pos_vel_acc(float position, float velocity, float acc);
-    void pos_vel_rkp_rkd(float position, float velocity, float rKp, float rKd);
     void pos_vel_kp_ki_kd(float position, float velocity, float torque, float kp, float ki, float kd);
-    void pos_vel_tqe_rkp_rkd(float position, float velocity, float torque, float rKp, float rKd);
 
     void stop();
     void brake();
@@ -170,8 +168,8 @@ public:
     void set_motor_type(std::string type_str);
     int get_motor_belong_canport();
     int get_motor_belong_canboard();
-    motor_pos_val_tqe_rpd_s *return_pos_val_tqe_rpd_p();
-    size_t return_size_motor_pos_val_tqe_rpd_s();
+    motor_pos_vel_tqe_kp_kd_s *return_pos_vel_tqe_kp_kd_p();
+    size_t return_size_motor_pos_vel_tqe_kp_kd_s();
     motor_back_t *get_current_motor_state();
     std::string get_motor_name();
     cdc_rx_motor_version_s& get_version();
