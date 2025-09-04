@@ -36,7 +36,9 @@ include_directories(
 
 add_library(hightorque_robot SHARED ${serial_SRCS})
 target_link_libraries(hightorque_robot rt pthread ${SERIALPORT_LIBRARY} serial lcm yaml-cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/msg)
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${CMAKE_CURRENT_SOURCE_DIR}/include 
+  ${CMAKE_CURRENT_SOURCE_DIR}/msg)
 
 add_executable(motor_run example/motor_run.cpp)
 target_link_libraries(motor_run hightorque_robot)
