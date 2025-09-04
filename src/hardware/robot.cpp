@@ -185,41 +185,6 @@ namespace hightorque_robot
         }
     }
 
-    // void robot::publishJointStates()
-    // {
-    //     ros::Rate rate(10); 
-    //     while (publish_joint_state && ros::ok())
-    //     {
-    //         sensor_msgs::JointState joint_state_msg;
-
-    //         // Fill in the joint state message
-    //         joint_state_msg.header.stamp = ros::Time::now();
-
-    //         for (motor *m : Motors)
-    //         {    
-    //             joint_state_msg.name.push_back(m->get_motor_name());
-    //             motor_back_t* data_ptr=m->get_current_motor_state();
-    //             ros::Time  now_time= ros::Time::now();
-    //             if(now_time.toSec()-data_ptr->time>0.1)
-    //             {
-    //                 joint_state_msg.position.push_back(-999);
-    //                 joint_state_msg.velocity.push_back(0);
-    //                 joint_state_msg.effort.push_back(0);
-    //             }
-    //             else
-    //             {
-    //                 joint_state_msg.position.push_back(data_ptr->position);
-    //                 joint_state_msg.velocity.push_back(data_ptr->velocity);
-    //                 joint_state_msg.effort.push_back(data_ptr->torque);
-    //             }
-    //         }
-    //         // Publish the joint state message
-    //         joint_state_pub_.publish(joint_state_msg);
-
-    //         // Sleep to maintain the loop rate
-    //         rate.sleep();
-    //     }
-    // }
     void robot::detect_motor_limit()
     {
         // 电机正常运行时检测是否超过限位，停机之后不检测
@@ -246,13 +211,13 @@ namespace hightorque_robot
         }
     }
 
-    void robot::motor_send_2()
+    void robot::motor_send_cmd()
     {
         if(!motor_position_limit_flag && !motor_torque_limit_flag)
         {
             for (canboard &cb : CANboards)
             {
-                cb.motor_send_2();
+                cb.motor_send_cmd();
             }
         }
         
@@ -587,7 +552,7 @@ namespace hightorque_robot
             {
                 m->velocity(0.0f);
             }
-            motor_send_2();
+            motor_send_cmd();
         }
     }
 
@@ -815,7 +780,7 @@ void robot::chevk_motor_connection_position()
         {
             cb.set_stop();
         }
-        motor_send_2();
+        motor_send_cmd();
     }
 
 

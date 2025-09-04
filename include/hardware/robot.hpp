@@ -46,7 +46,7 @@ namespace hightorque_robot
 
         void publishJointStates();
         void detect_motor_limit();
-        void motor_send_2();
+        void motor_send_cmd();
         int serial_pid_vid(const char *name, int *pid, int *vid);
         int serial_pid_vid(const char *name);
         std::vector<std::string> list_serial_ports(const std::string& full_prefix);

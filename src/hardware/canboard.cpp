@@ -32,11 +32,11 @@ void canboard::push_CANport(std::vector<canport*> *_CANport)
 }
 
 
-void canboard::motor_send_2()
+void canboard::motor_send_cmd()
 {
     for (canport *c : CANport)
     {
-        c->motor_send_2();
+        c->motor_send_cmd();
     }
 }
 
@@ -123,7 +123,7 @@ void canboard::set_reset_zero()
         for (int i = 0; i < 5; i++)
         {
             c->set_reset();
-            c->motor_send_2();
+            c->motor_send_cmd();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -133,9 +133,9 @@ void canboard::set_reset_zero()
             c->set_conf_write();
         }
         c->set_reset();
-        c->motor_send_2();
+        c->motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        c->motor_send_2();
+        c->motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

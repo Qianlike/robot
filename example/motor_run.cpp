@@ -27,7 +27,7 @@ int main(int argc, char **argv)
             cont = 0;
             angle*=-1;
         }
-        rb.motor_send_2();
+        rb.motor_send_cmd();
         ////////////////////////recv
         for (motor *m : rb.Motors)
         {

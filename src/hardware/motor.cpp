@@ -357,29 +357,6 @@ void motor::pos_vel_acc(float position, float velocity, float acc)
 
 void motor::pos_vel_tqe_kp_kd(float position, float velocity, float torque, float kp, float kd)
 {
-    if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD)
-    {
-        p_cdc_tx_message->head.s.head = 0xF7;
-        p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE_KP_KD;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_vel_tqe_kp_kd_s);
-        for (uint8_t i = 0; i < id_max; i++)
-        {
-            p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].vel = 0x0000;
-            p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].tqe = 0x0000;
-            p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].kp = 0x0000;
-            p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].kd = 0x0000;
-        }
-    }
-    p_cdc_tx_message->data.pos_vel_tqe_kp_kd[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
-    p_cdc_tx_message->data.pos_vel_tqe_kp_kd[MEM_INDEX_ID(id)].vel = vel_float2int(velocity, pos_vel_type);
-    p_cdc_tx_message->data.pos_vel_tqe_kp_kd[MEM_INDEX_ID(id)].tqe = tqe_float2int(torque, type_);
-    p_cdc_tx_message->data.pos_vel_tqe_kp_kd[MEM_INDEX_ID(id)].kp = kp_float2int(kp, pos_vel_type, type_); 
-    p_cdc_tx_message->data.pos_vel_tqe_kp_kd[MEM_INDEX_ID(id)].kd = kd_float2int(kd, pos_vel_type, type_);
-}
-
-void motor::pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd)
-{
     if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD2)
     {
         p_cdc_tx_message->head.s.head = 0xF7;

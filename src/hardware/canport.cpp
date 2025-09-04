@@ -55,7 +55,7 @@ float canport::set_motor_num()
     #define MAX_DALAY 1000  // 单位ms
     while (t++ < MAX_DALAY)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (port_version >= 2)
         {
@@ -95,7 +95,7 @@ int canport::set_reset_zero()
     mode_flag = 0;
     while (t++ < max_delay)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         num = 0;
         if (mode_flag == MODE_RESET_ZERO)
@@ -148,7 +148,7 @@ int canport::set_reset_zero(int id)
     mode_flag = 0;
     while (t++ < max_delay)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (mode_flag == MODE_RESET_ZERO && motors_id.count(id) == 1)
         {
@@ -170,7 +170,7 @@ void canport::set_stop()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -185,7 +185,7 @@ void canport::set_motor_runzero()
     }
     cdc_tr_message.data.data[0] = 0x7f;
 
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -199,9 +199,9 @@ void canport::set_reset()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_2();
-    motor_send_2();
-    motor_send_2();
+    motor_send_cmd();
+    motor_send_cmd();
+    motor_send_cmd();
 }
 
 
@@ -224,7 +224,7 @@ void canport::set_conf_write()
     mode_flag = 0;
     while (t++ < max_delay)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         num = 0;
         if (mode_flag == MODE_CONF_WRITE)
@@ -275,7 +275,7 @@ int canport::set_conf_write(int id)
     mode_flag = 0;
     while (t++ < max_delay)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (mode_flag == MODE_CONF_WRITE && motors_id.count(id) == 1)
         {
@@ -297,7 +297,7 @@ void canport::send_get_motor_state_cmd()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -311,7 +311,7 @@ void canport::send_get_motor_state_cmd2()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -325,7 +325,7 @@ void canport::send_get_motor_version_cmd()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -344,7 +344,7 @@ void canport::set_fun_v(fun_version v)
     #define MAX_DALAY 1000  // 单位ms
     while (t++ < MAX_DALAY)
     {
-        motor_send_2();
+        motor_send_cmd();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         if (v == fun_v)
         {
@@ -381,7 +381,7 @@ void canport::set_time_out(int16_t t_ms)
         cdc_tr_message.data.timeout[i] = t_ms;
     }
     
-    motor_send_2();
+    motor_send_cmd();
 }
 
 
@@ -394,7 +394,7 @@ void canport::puch_motor(std::vector<motor *> *_Motors)
 }
 
 
-void canport::motor_send_2()
+void canport::motor_send_cmd()
 {
     ser->send_2(&cdc_tr_message);
 }
@@ -428,9 +428,9 @@ void canport::canboard_bootloader()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     
-    motor_send_2();
-    motor_send_2();
-    motor_send_2();
+    motor_send_cmd();
+    motor_send_cmd();
+    motor_send_cmd();
 }
 
 
@@ -444,7 +444,7 @@ void canport::canboard_fdcan_reset()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     
-    motor_send_2();
-    motor_send_2();
-    motor_send_2();
+    motor_send_cmd();
+    motor_send_cmd();
+    motor_send_cmd();
 }

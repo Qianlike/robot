@@ -46,7 +46,7 @@ public:
     void set_data_reset();
     void set_time_out(int16_t t_ms);
     void puch_motor(std::vector<motor *> *_Motors);
-    void motor_send_2();
+    void motor_send_cmd();
     int get_motor_num();
     int get_canboard_id();
     int get_canport_id();

@@ -19,7 +19,7 @@ public:
     std::vector<canport*>& get_CANport();
     int get_CANport_num();
     void push_CANport(std::vector<canport*> *_CANport);
-    void motor_send_2();
+    void motor_send_cmd();
     void set_stop();
     void set_reset();
     float set_port_motor_num();
