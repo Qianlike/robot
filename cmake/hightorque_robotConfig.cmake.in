@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# 查找 serial 库
+find_dependency(serial REQUIRED)
+
+# 查找 lcm 库
+find_dependency(lcm REQUIRED)
+
+# 查找 yaml-cpp
+find_dependency(yaml-cpp REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/hightorque_robotTargets.cmake")
