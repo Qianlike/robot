@@ -1,5 +1,5 @@
 #include <lcm/lcm-cpp.hpp>
-#include "motor_msg.hpp"  // Include the generated header for motor_msg
+#include "motor_msg/motor_msg.hpp"  // Include the generated header for motor_msg
 #include <iostream>
 
 // Callback function to handle incoming LCM messages

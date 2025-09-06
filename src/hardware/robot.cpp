@@ -1,7 +1,7 @@
 #include "robot.hpp"
 #include "parse_robot_params.hpp"
 #include <unistd.h>
-#include "motor_msg.hpp"
+#include "motor_msg/motor_msg.hpp"
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 #include <iomanip>

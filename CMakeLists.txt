@@ -13,8 +13,10 @@ set(VERSION_PATCH 7)
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 # Find catkin
-add_subdirectory(lib/serial_cmake)
-add_subdirectory(lib/lcm)
+# add_subdirectory(lib/serial_cmake)
+# add_subdirectory(lib/lcm)
+find_package(lcm REQUIRED)
+find_package(serial REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 
@@ -46,22 +48,34 @@ endif()
 # )
 
 add_library(hightorque_robot SHARED ${serial_SRCS})
-target_link_libraries(hightorque_robot rt pthread ${SERIALPORT_LIBRARY} serial lcm yaml-cpp)
+
+# 将依赖项链接为PUBLIC，这样使用此库的项目也会自动链接这些依赖
+target_link_libraries(hightorque_robot 
+    PUBLIC 
+        lcm 
+        serial 
+        yaml-cpp
+    PRIVATE 
+        rt 
+        pthread 
+        ${SERIALPORT_LIBRARY}
+)
 target_include_directories(${PROJECT_NAME} PUBLIC 
-  # ${CMAKE_CURRENT_SOURCE_DIR}/include 
-  # ${CMAKE_CURRENT_SOURCE_DIR}/msg
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/crc>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/hardware>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/msg/motor_msg>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/msg>
   $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:include/crc>
+  $<INSTALL_INTERFACE:include/hardware>
+  $<INSTALL_INTERFACE:include/motor_msg>
 )
 
 # 设置版本和属性
 set_target_properties(hightorque_robot PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${VERSION_MAJOR}
-    PUBLIC_HEADER "include/hardware/robot.hpp;include/hardware/motor.hpp;include/hardware/canport.hpp;include/hardware/canboard.hpp;msg/motor_msg/motor_msg.hpp"
+    PUBLIC_HEADER "include/hardware/robot.hpp;include/hardware/motor.hpp;include/hardware/canport.hpp;include/hardware/canboard.hpp;include/parse_robot_params.hpp;include/serial_struct.hpp;include/serial_driver.hpp;include/crc/crc8.hpp;include/crc/crc16.hpp;msg/motor_msg/motor_msg.hpp"
 )
 
 add_executable(motor_run example/motor_run.cpp)
@@ -83,8 +97,14 @@ install(TARGETS hightorque_robot
 )
 
 # 安装头文件
-install(DIRECTORY include/ DESTINATION include)
-install(DIRECTORY msg/motor_msg/ DESTINATION include/motor_msg)
+install(DIRECTORY include/ DESTINATION include 
+    FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
+install(DIRECTORY msg/motor_msg/ DESTINATION include/motor_msg 
+    FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
+
+# 安装配置文件模板
+install(DIRECTORY robot_param/ DESTINATION share/hightorque_robot/robot_param 
+    FILES_MATCHING PATTERN "*.yaml")
 
 # 创建并安装配置文件
 install(EXPORT hightorque_robotTargets
