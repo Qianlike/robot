@@ -42,7 +42,13 @@ namespace hightorque_robot
         int motor_timeout_ms = 0;
 
         robot();
+        robot(const std::string& config_path);
         ~robot();
+
+    private:
+        void init_robot(const std::string& config_path);
+        
+    public:
 
         void publishJointStates();
         void detect_motor_limit();

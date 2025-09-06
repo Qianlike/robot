@@ -10,9 +10,29 @@ namespace hightorque_robot
 {
     robot::robot()
     {
-        auto config = YAML::LoadFile("../robot_param/robot_config.yaml");
+        init_robot("../robot_param/robot_config.yaml");
+    }
+
+    robot::robot(const std::string& config_path)
+    {
+        init_robot(config_path);
+    }
+
+    void robot::init_robot(const std::string& config_path)
+    {
+        auto config = YAML::LoadFile(config_path);
         std::cout << "robot_config: " << config["robot"]["name"].as<std::string>() << std::endl;
         auto param_file = config["robot"]["param_file"].as<std::string>();
+        
+        // 如果param_file是相对路径，则相对于config_path的目录
+        if (param_file[0] != '/') {
+            size_t last_slash = config_path.find_last_of('/');
+            if (last_slash != std::string::npos) {
+                std::string config_dir = config_path.substr(0, last_slash + 1);
+                param_file = config_dir + param_file;
+            }
+        }
+        
         robot_params  = parseRobotParams(param_file);
         Seial_baudrate = robot_params.Seial_baudrate;
         robot_name = robot_params.robot_name;
