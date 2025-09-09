@@ -238,6 +238,7 @@ namespace hightorque_robot
             for (canboard &cb : CANboards)
             {
                 cb.motor_send_cmd();
+                std::cout << "CPP:Send CMD" << std::endl;
             }
         }
         

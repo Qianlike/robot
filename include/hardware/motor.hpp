@@ -140,6 +140,7 @@ public:
     inline int16_t ki_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t kd_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t int16_limit(int32_t data);
+    uint8_t get_data_len(uint8_t mode, uint16_t num);
 
     void position(float position);
     void velocity(float velocity);

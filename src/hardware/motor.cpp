@@ -220,14 +220,92 @@ inline float motor::vel_int2float(int16_t in_data, uint8_t type)
     }
 }
 
+uint8_t motor::get_data_len(uint8_t mode, uint16_t num)
+{
+    uint8_t motor_one_len = 0;
+    switch (mode)
+    {
+        case MODE_POSITION:
+        case MODE_VELOCITY:
+        case MODE_TORQUE:
+        case MODE_VOLTAGE:
+        case MODE_CURRENT:
+        case MODE_TIME_OUT:
+            motor_one_len = 2;
+            break;
+        case MODE_POS_VEL_TQE:
+        case MODE_POS_VEL_ACC:
+            motor_one_len = 6;
+            break;
+        case MODE_POS_VEL_KP_KD:
+            motor_one_len = 8;
+            break;
+        case MODE_POS_VEL_TQE_KP_KD:
+        case MODE_POS_VEL_TQE_KP_KD2:
+            motor_one_len = 10;
+            std::cout << "CPP:MIT" << std::endl;
+            break;
+        default:
+            motor_one_len = 0;
+            ROS_ERROR("This mode has beenThis mode is deprecated.");
+            exit(0);
+    }
+
+    uint8_t fdcan_one_len = 60;
+    if (mode == MODE_POS_VEL_KP_KD)
+    {
+        fdcan_one_len = 56;
+    }
+
+    const uint16_t len = motor_one_len * num;
+    const uint8_t mul = len / fdcan_one_len;
+    const uint8_t rem = len % fdcan_one_len;
+    uint8_t rem_len = 0;
+
+    if (rem <= 6)
+    {
+        rem_len = len;
+    }
+    else if (rem <= 10)
+    {
+        rem_len = 10;
+    }
+    else if (rem <= 14)
+    {
+        rem_len = 14;
+    }
+    else if (rem <= 18)
+    {
+        rem_len = 18;
+    }
+    else if (rem <= 22)
+    {
+        rem_len = 22;
+    }
+    else if (rem <= 30)
+    {
+        rem_len = 30;
+    }
+    else if (rem <= 46)
+    {
+        rem_len = 46;
+    }
+    else 
+    {
+        rem_len = fdcan_one_len;
+    }
+
+    return mul * fdcan_one_len + rem_len;
+}
+
 void motor::position(float position)
 {
     if (p_cdc_tx_message->head.s.cmd != MODE_POSITION)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POSITION;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POSITION, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.position[i] = 0x8000;
         }
@@ -242,8 +320,8 @@ void motor::velocity(float velocity)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_VELOCITY;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_VELOCITY, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.position[i] = 0x0000;
         }
@@ -258,8 +336,8 @@ void motor::torque(float torque)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_TORQUE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_TORQUE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.torque[i] = 0x0000;
         }
@@ -274,8 +352,8 @@ void motor::voltage(float voltage)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_VOLTAGE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_VOLTAGE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.voltage[i] = 0x0000;
         }
@@ -290,8 +368,8 @@ void motor::current(float current)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_CURRENT;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_CURRENT, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.current[i] = 0x0000;
         }
@@ -306,8 +384,8 @@ void motor::set_motorout(int16_t t_ms)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_TIME_OUT;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_TIME_OUT, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.timeout[i] = 0x0000;
         }
@@ -322,8 +400,8 @@ void motor::pos_vel_MAXtqe(float position, float velocity, float torque_max)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_vel_tqe_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_TQE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.pos_vel_tqe[i].pos = 0x8000;
             p_cdc_tx_message->data.pos_vel_tqe[i].vel = 0x0000;
@@ -342,8 +420,8 @@ void motor::pos_vel_acc(float position, float velocity, float acc)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_ACC;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_vel_tqe_kp_kd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_ACC, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.pos_vel_acc[i].pos = 0x8000;
             p_cdc_tx_message->data.pos_vel_acc[i].vel = 0x0000;
@@ -361,8 +439,8 @@ void motor::pos_vel_tqe_kp_kd(float position, float velocity, float torque, floa
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE_KP_KD2;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_vel_tqe_kp_kd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_TQE_KP_KD2, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].pos = 0x8000;
             p_cdc_tx_message->data.pos_vel_tqe_kp_kd[i].vel = 0x0000;
@@ -384,8 +462,8 @@ void motor::pos_vel_kp_kd(float position, float velocity, float kp, float kd)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_KP_KD;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_vel_kp_kd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_KP_KD, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.pos_vel_kp_kd[i].pos = 0x8000;
             p_cdc_tx_message->data.pos_vel_kp_kd[i].vel = 0x0000;
@@ -406,8 +484,8 @@ void motor::stop()
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_STOP;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(uint8_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_STOP, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.data[i] = 0;
         }
@@ -423,8 +501,8 @@ void motor::brake()
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_BRAKE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(uint8_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_BRAKE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.data[i] = 0;
         }
@@ -440,8 +518,8 @@ void motor::reset()
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_RESET;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(uint8_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_RESET, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.data[i] = 0;
         }
@@ -460,8 +538,8 @@ void motor::send_state_cmd()
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_MOTOR_STATE2;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(uint8_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_MOTOR_STATE2, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
             p_cdc_tx_message->data.data[i] = 0;
         }
