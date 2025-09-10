@@ -21,6 +21,9 @@
 * C++11 编译器
 * libserialport（串口通信）
 * yaml-cpp（YAML配置文件解析）
+* lcm
+* serial_cmake
+
 
 1. 安装串口依赖
 ```
@@ -46,3 +49,20 @@ cd build
 cmake ..
 make -j8
 ```
+
+3. 安装
+```
+sudo make install
+```
+4. 补充
+当外部项目调用当前库的时候，可能会出现找不到liblivelybot_serial.so.*的情况，这个时候需要申明安装位置
+在当前命令行执行：
+```
+export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+```
+或者在`~/.bashrc`中添加如下行
+```
+......
+export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+```
+并执行`souce ~/.bashrc`使修改生效。
