@@ -12,14 +12,9 @@ set(VERSION_MINOR 4)
 set(VERSION_PATCH 7)
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
-# Find catkin
-# add_subdirectory(lib/serial_cmake)
-# add_subdirectory(lib/lcm)
 find_package(lcm REQUIRED)
 find_package(serial REQUIRED)
 find_package(yaml-cpp REQUIRED)
-
-
 
 set(rt_LIBRARIES rt)
 set(pthread_LIBRARIES pthread)
@@ -39,13 +34,6 @@ find_library(SERIALPORT_LIBRARY serialport)
 if(NOT SERIALPORT_LIBRARY)
   message(FATAL_ERROR "libserialport not found")
 endif()
-
-# include_directories(
-#   include
-#   include/crc
-#   include/hardware
-#   msg/motor_msg
-# )
 
 add_library(hightorque_robot SHARED ${serial_SRCS})
 

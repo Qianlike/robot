@@ -8,8 +8,8 @@
 ### 主要特性
 
 * 支持多种电机型号（4438、5046、5047、6056等系列）；
-* 多种控制模式：位置控制、速度控制、力矩控制、混合控制；
-* 支持多个CAN总线板卡和多个电机；
+* 多种控制模式：位置控制、速度控制、力矩控制、混合控制等；
+* 支持多个CAN总线板卡和多个电机，目前硬件支持7路CAN总线，每条总线可以挂30个电机；
 * 提供LCM（Lightweight Communications and Marshalling）消息发布；
 * 实时电机状态反馈；
 
@@ -29,7 +29,7 @@
 ```
 sudo apt-get install libserialport-dev
 ```
-1. 安装yaml解析器
+2. 安装yaml解析器
 ```
 sudo apt-get install libyaml-cpp-dev
 ```
