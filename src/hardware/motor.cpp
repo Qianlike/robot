@@ -243,7 +243,6 @@ uint8_t motor::get_data_len(uint8_t mode, uint16_t num)
         case MODE_POS_VEL_TQE_KP_KD:
         case MODE_POS_VEL_TQE_KP_KD2:
             motor_one_len = 10;
-            std::cout << "CPP:MIT" << std::endl;
             break;
         default:
             motor_one_len = 0;
