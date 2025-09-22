@@ -291,7 +291,7 @@ namespace hightorque_robot
                 {
                     switch (vid)
                     {
-                    case (0xCAF1):
+                    case (0xFAE1):
                     case (0xCAE1):
                         r = 1;
                         break;
@@ -827,6 +827,7 @@ void robot::chevk_motor_connection_position()
     {
         for (auto const &motor : motors)
         {
+            
             int board_id = Motors[motor]->get_motor_belong_canboard() - 1;
             int port_id = Motors[motor]->get_motor_belong_canport() - 1;
             int motor_id = Motors[motor]->get_motor_id();
