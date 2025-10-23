@@ -1,7 +1,7 @@
 #include "serial_driver.hpp"
 #include <iostream>
 
-serial_driver::serial_driver(std::string *port, uint32_t baudrate)
+serial_driver::serial_driver(std::string *port, uint32_t baudrate, bool _canport_error_output_flag): canport_error_output_flag(_canport_error_output_flag)
 {
     init_flag = false;
     error_flag = false;
@@ -66,12 +66,12 @@ void serial_driver::recv_1for6_42()
                     }
                     else
                     {
-                        // printf("cmd %02X  ", SOF.cmd);
-                        // for (int i = 0; i < SOF.len; i++)
-                        // {
-                        //     printf("0x%02X ", cdc_rx_message_data.data[i]);
-                        // }
-                        // printf("\n");
+                        printf("cmd %02X  ", SOF.cmd);
+                        for (int i = 0; i < SOF.len; i++)
+                        {
+                            printf("0x%02X ", cdc_rx_message_data.data[i]);
+                        }
+                        printf("\n");
 
                         switch (SOF.cmd)
                         {
@@ -85,8 +85,12 @@ void serial_driver::recv_1for6_42()
                             break;
 
                         case(MODE_SET_NUM):
-                            *p_port_version = cdc_rx_message_data.data[2];
-                            *p_port_version += (float)cdc_rx_message_data.data[3] * 0.1f;
+                            {
+                                const uint8_t v_major = cdc_rx_message_data.data[2];
+                                const uint8_t v_minor = cdc_rx_message_data.data[3];
+                                const uint8_t v_patch = SOF.len == 4 ? 0 : cdc_rx_message_data.data[4];
+                                *p_port_version = COMBINE_VERSION(v_major, v_minor, v_patch);
+                            }
                             break;
                         case(MODE_FUN_V):
                             *p_fun_v = (fun_version)cdc_rx_message_data.data[0];
@@ -129,6 +133,88 @@ void serial_driver::recv_1for6_42()
                                                     cdc_rx_message_data.motor_state2[i].tqe);
                                 }
                             }
+                            break;
+                        case(MODE_FDCAN_MOTOR_STATE2):
+                            {
+                                cdc_rx_fdcan_state_s &_p_fdcan_state = cdc_rx_message_data.fdcan_motor_state.fdcan_state;
+                                
+                                if (canport_error_output_flag)
+                                {
+                                    if (_p_fdcan_state.fault > FDCAN_STATUS_ERROR_WARNING || _p_fdcan_state.fault == FDCAN_STATUS_UNKNOWN)
+                                    {
+                                        ROS_ERROR("canport[%d] flaut = %d, rx = %d, tx = %d", Map_Motors_p.begin()->second->get_motor_belong_canport(), _p_fdcan_state.fault, _p_fdcan_state.rx_err_num, _p_fdcan_state.tx_err_num);
+                                    }
+                                    else if (_p_fdcan_state.fault == FDCAN_STATUS_ERROR_WARNING)
+                                    {
+                                        ROS_INFO("\033[1;32mcanport[%d] flaut = %d, rx = %d, tx = %d\033[0m", Map_Motors_p.begin()->second->get_motor_belong_canport(), _p_fdcan_state.fault, _p_fdcan_state.rx_err_num, _p_fdcan_state.tx_err_num);
+                                    }
+                                }
+                                
+                                p_fdcan_state->fault = _p_fdcan_state.fault;
+                                p_fdcan_state->rx_err_num = _p_fdcan_state.rx_err_num;
+                                p_fdcan_state->tx_err_num = _p_fdcan_state.tx_err_num;
+                                
+
+                                for (size_t i = 0; i < (SOF.len - sizeof(cdc_rx_fdcan_state_s)) / sizeof(cdc_rx_motor_state2_s); i++)
+                                {
+                                    auto it = Map_Motors_p.find(cdc_rx_message_data.fdcan_motor_state.motor_state2[i].id);
+                                    if (it != Map_Motors_p.end())
+                                    {
+                                        it->second->fresh_data(
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].mode,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].fault,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].pos,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].val,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].tqe);
+                                    }
+                                }
+                            }
+                            break;
+                        case(MODE_FDCAN_MOTOR_STATE):
+                            {
+                                cdc_rx_fdcan_state_s &_p_fdcan_state = cdc_rx_message_data.fdcan_motor_state.fdcan_state;
+                                
+                                if (canport_error_output_flag)
+                                {
+                                    if (_p_fdcan_state.fault > FDCAN_STATUS_ERROR_WARNING || _p_fdcan_state.fault == FDCAN_STATUS_UNKNOWN)
+                                    {
+                                        ROS_ERROR("canport[%d] flaut = %d, rx = %d, tx = %d", Map_Motors_p.begin()->second->get_motor_belong_canport(), _p_fdcan_state.fault, _p_fdcan_state.rx_err_num, _p_fdcan_state.tx_err_num);
+                                    }
+                                    else if (_p_fdcan_state.fault == FDCAN_STATUS_ERROR_WARNING)
+                                    {
+                                        ROS_INFO("\033[1;32mcanport[%d] flaut = %d, rx = %d, tx = %d\033[0m", Map_Motors_p.begin()->second->get_motor_belong_canport(), _p_fdcan_state.fault, _p_fdcan_state.rx_err_num, _p_fdcan_state.tx_err_num);
+                                    }
+                                }
+                                
+                                p_fdcan_state->fault = _p_fdcan_state.fault;
+                                p_fdcan_state->rx_err_num = _p_fdcan_state.rx_err_num;
+                                p_fdcan_state->tx_err_num = _p_fdcan_state.tx_err_num;
+                                
+
+                                for (size_t i = 0; i < (SOF.len - sizeof(cdc_rx_fdcan_state_s)) / sizeof(cdc_rx_motor_state_s); i++)
+                                {
+                                    auto it = Map_Motors_p.find(cdc_rx_message_data.fdcan_motor_state.motor_state[i].id);
+                                    if (it != Map_Motors_p.end())
+                                    {
+                                        it->second->fresh_data(0,0,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state[i].pos,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state[i].val,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state[i].tqe);
+                                    }
+                                }
+                            }
+                            break;
+                        case(MODE_TQE_ADJS_FLAG):
+                            for (size_t i = 0; i < (SOF.len / sizeof(cdc_rx_motor_flag_s)); i++)
+                            {
+                                auto it = Map_Motors_p.find(cdc_rx_message_data.motor_flag[i].id);
+                                if (it != Map_Motors_p.end())
+                                {
+                                    it->second->set_tqe_adjust_flag(cdc_rx_message_data.motor_flag[i].flag);
+                                }
+                            }
+                            break;
+                        default:
                             break;
                         }
                     }
@@ -211,7 +297,7 @@ void serial_driver::send_2(cdc_tr_message_s *cdc_tr_message)
 }
 
 
-void serial_driver::port_version_init(float *p)
+void serial_driver::port_version_init(uint16_t *p)
 {
     p_port_version = p;
 }
@@ -233,4 +319,13 @@ void serial_driver::init_map_motor(std::map<int, motor *> *_Map_Motors_p)
 void serial_driver::port_fun_v_init(fun_version *_p_fun_v)
 {
     p_fun_v = _p_fun_v;
+}
+
+
+void serial_driver::port_fdcan_state_init(cdc_rx_fdcan_state_s *_p_fdcan_state)
+{
+    p_fdcan_state = _p_fdcan_state;
+    p_fdcan_state->fault = FDCAN_STATUS_OK;
+    p_fdcan_state->rx_err_num = 0;
+    p_fdcan_state->tx_err_num = 0;
 }

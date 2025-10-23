@@ -3,11 +3,12 @@
 #include <thread>
 
 
-canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams &canport_params) : ser(_ser)
+canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams &canport_params, bool _canport_error_output_flag) : ser(_ser)
 {
     canboard_id = _CANboard_num;
     canport_id = _CANport_num;
     motor_num = canport_params.motor_num;
+    canport_error_output_flag = _canport_error_output_flag;
 
     if (PORT_MOTOR_NUM_MAX < motor_num)
     {
@@ -36,16 +37,17 @@ canport::canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPo
     ser->port_version_init(&port_version);
     ser->port_motors_id_init(&motors_id, &mode_flag);
     ser->port_fun_v_init(&fun_v);
+    ser->port_fdcan_state_init(&fdcan_state);
 }
 
 
-float canport::set_motor_num()
+uint16_t canport::set_motor_num()
 {
     if (cdc_tr_message.head.s.cmd != MODE_SET_NUM)
     {
         cdc_tr_message.head.s.head = 0XF7;
         cdc_tr_message.head.s.cmd = MODE_SET_NUM;
-        cdc_tr_message.head.s.len = 1;
+        cdc_tr_message.head.s.len = 2;
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
 
@@ -57,7 +59,7 @@ float canport::set_motor_num()
     {
         motor_send_2();
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        if (port_version >= 2)
+        if (port_version >= COMBINE_VERSION(3, 0, 0))
         {
             // printf("\033[1;32m ttt %d\033[0m", t);
             break;
@@ -66,7 +68,8 @@ float canport::set_motor_num()
 
     if (t < MAX_DALAY)
     {
-        std::cout << "\033[1;32mCANboard(" << canboard_id << ") version is: v" << port_version << "\033[0m" << std::endl;
+        std::cout << "\033[1;32mCANboard(" << canboard_id << ") version is: v" << GET_MAJOR_VERSION(port_version) 
+        << '.' << GET_MINOR_VERSION(port_version) << "." << GET_PATCH_VERSION(port_version) << "\033[0m" << std::endl;
     }
     else
     {
@@ -174,27 +177,28 @@ void canport::set_stop()
 }
 
 
-void canport::set_motor_runzero()
-{
-    if (cdc_tr_message.head.s.cmd != MODE_RUNZERO)
-    {
-        cdc_tr_message.head.s.head = 0XF7;
-        cdc_tr_message.head.s.cmd = MODE_RUNZERO;
-        cdc_tr_message.head.s.len = 1;
-        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
-    }
-    cdc_tr_message.data.data[0] = 0x7f;
-
-    motor_send_2();
-}
-
-
 void canport::set_reset()
 {
     if (cdc_tr_message.head.s.cmd != MODE_RESET)
     {
         cdc_tr_message.head.s.head = 0XF7;
         cdc_tr_message.head.s.cmd = MODE_RESET;
+        cdc_tr_message.head.s.len = 1;
+        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
+    }
+    cdc_tr_message.data.data[0] = 0x7f;
+    motor_send_2();
+    motor_send_2();
+    motor_send_2();
+}
+
+
+void canport::send_get_tqe_adjust_flag_cmd()
+{
+    if (cdc_tr_message.head.s.cmd != MODE_TQE_ADJS_FLAG)
+    {
+        cdc_tr_message.head.s.head = 0XF7;
+        cdc_tr_message.head.s.cmd = MODE_TQE_ADJS_FLAG;
         cdc_tr_message.head.s.len = 1;
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
@@ -252,7 +256,7 @@ void canport::set_conf_write()
     else 
     {
         std::cerr << "\033[1;31m" << "Failed to save settings." << "\033[0m" << std::endl;
-        exit(-1);
+        exit(0);
     }
 }
 
@@ -329,16 +333,24 @@ void canport::send_get_motor_version_cmd()
 }
 
 
-void canport::set_fun_v(fun_version v)
+void canport::set_fun_v(fun_version v, uint16_t motor_version)
 {
     if (cdc_tr_message.head.s.cmd != MODE_FUN_V)
     {
         cdc_tr_message.head.s.head = 0XF7;
         cdc_tr_message.head.s.cmd = MODE_FUN_V;
-        cdc_tr_message.head.s.len = 1;
+        if (canport_error_output_flag)
+        {
+            cdc_tr_message.head.s.len = 3;
+        }
+        else
+        {
+            cdc_tr_message.head.s.len = 1;
+        }
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = v;
+    *(uint16_t *)&cdc_tr_message.data.data[1] = motor_version;
 
     int t = 0;
     #define MAX_DALAY 1000  // 单位ms
@@ -357,12 +369,6 @@ void canport::set_fun_v(fun_version v)
     {
         std::cerr << "\033[1;31m" << "CANboard(" << canboard_id << ") CANport(" << canport_id << ") fun_v err!!!" << "\033[0m" << std::endl;
     }
-}
-
-
-void canport::set_data_reset()
-{
-    memset(cdc_tr_message.data.data, 0xFFFFFFFF, CDC_TR_MESSAGE_DATA_LEN / sizeof(int));
 }
 
 
@@ -415,6 +421,12 @@ int canport::get_canboard_id()
 int canport::get_canport_id()
 {
     return canport_id;
+}
+
+
+cdc_rx_fdcan_state_s &canport::get_canport_state()
+{
+    return fdcan_state;
 }
 
 

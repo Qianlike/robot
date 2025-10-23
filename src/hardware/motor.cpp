@@ -26,6 +26,7 @@ motor::motor(int _motor_num, int _CANport_num, int _CANboard_num, cdc_tr_message
     data.position = 999.0f;
     data.velocity = 0;
     data.torque = 0;
+    data.num = 0;
 }
 
 
@@ -82,7 +83,7 @@ inline int16_t motor::tqe_float2int(float in_data, motor_type motor_type)
     if (it == motor_tqe_adj.end())
     {
         ROS_ERROR("Motor Type SettingMotor type setting error");
-        exit(-1);
+        exit(0);
         return int16_t();
     }
 
@@ -96,7 +97,7 @@ inline float motor::tqe_int2float(int16_t in_data, motor_type motor_type)
     if (it == motor_tqe_adj.end())
     {
         ROS_ERROR("Motor Type SettingMotor type setting error");
-        exit(-1);
+        exit(0);
         return int16_t();
     }
 
@@ -110,7 +111,7 @@ inline float motor::pid_scale(float in_data, motor_type motor_type)
     if (it == motor_tqe_adj.end())
     {
         ROS_ERROR("Motor Type SettingMotor type setting error");
-        exit(-1);
+        exit(0);
         return int16_t();
     }
 
@@ -220,16 +221,95 @@ inline float motor::vel_int2float(int16_t in_data, uint8_t type)
     }
 }
 
+uint8_t motor::get_data_len(uint8_t mode, uint16_t num)
+{
+    uint8_t motor_one_len = 0;
+    switch (mode)
+    {
+        case MODE_POSITION:
+        case MODE_VELOCITY:
+        case MODE_TORQUE:
+        case MODE_VOLTAGE:
+        case MODE_CURRENT:
+        case MODE_TIME_OUT:
+            motor_one_len = 2;
+            break;
+        case MODE_POS_VEL_TQE:
+        case MODE_POS_VEL_ACC:
+            motor_one_len = 6;
+            break;
+        case MODE_POS_VEL_KP_KD:
+            motor_one_len = 8;
+            break;
+    #ifdef MODE_POS_VEL_TQE_KP_KD
+        case MODE_POS_VEL_TQE_KP_KD:
+    #endif
+        case MODE_POS_VEL_TQE_KP_KD_2:
+            motor_one_len = 10;
+            break;
+        default:
+            motor_one_len = 0;
+            ROS_ERROR("This mode has beenThis mode is deprecated.");
+            exit(0);
+    }
+
+    uint8_t fdcan_one_len = 60;
+    if (mode == MODE_POS_VEL_KP_KD)
+    {
+        fdcan_one_len = 56;
+    }
+
+    const uint16_t len = motor_one_len * num;
+    const uint8_t mul = len / fdcan_one_len;
+    const uint8_t rem = len % fdcan_one_len;
+    uint8_t rem_len = 0;
+
+    if (rem <= 6)
+    {
+        rem_len = len;
+    }
+    else if (rem <= 10)
+    {
+        rem_len = 10;
+    }
+    else if (rem <= 14)
+    {
+        rem_len = 14;
+    }
+    else if (rem <= 18)
+    {
+        rem_len = 18;
+    }
+    else if (rem <= 22)
+    {
+        rem_len = 22;
+    }
+    else if (rem <= 30)
+    {
+        rem_len = 30;
+    }
+    else if (rem <= 46)
+    {
+        rem_len = 46;
+    }
+    else 
+    {
+        rem_len = fdcan_one_len;
+    }
+
+    return mul * fdcan_one_len + rem_len;
+}
+
 void motor::position(float position)
 {
     if (p_cdc_tx_message->head.s.cmd != MODE_POSITION)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POSITION;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POSITION, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.position[i] = 0x8000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -242,10 +322,10 @@ void motor::velocity(float velocity)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_VELOCITY;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_VELOCITY, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.position[i] = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -258,10 +338,10 @@ void motor::torque(float torque)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_TORQUE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_TORQUE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.torque[i] = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -274,10 +354,10 @@ void motor::voltage(float voltage)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_VOLTAGE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_VOLTAGE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.voltage[i] = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -290,10 +370,10 @@ void motor::current(float current)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_CURRENT;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_CURRENT, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.current[i] = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -306,10 +386,10 @@ void motor::set_motorout(int16_t t_ms)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_TIME_OUT;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(int16_t);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_TIME_OUT, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.timeout[i] = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
 
@@ -322,12 +402,10 @@ void motor::pos_vel_MAXtqe(float position, float velocity, float torque_max)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_val_tqe_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_TQE, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_val_tqe[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_val_tqe[i].val = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe[i].tqe = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_val_tqe[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
@@ -342,12 +420,10 @@ void motor::pos_vel_acc(float position, float velocity, float acc)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_ACC;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_val_tqe_rpd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_ACC, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_val_acc[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_val_acc[i].val = 0x0000;
-            p_cdc_tx_message->data.pos_val_acc[i].acc = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_val_acc[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
@@ -355,20 +431,17 @@ void motor::pos_vel_acc(float position, float velocity, float acc)
     p_cdc_tx_message->data.pos_val_acc[MEM_INDEX_ID(id)].acc = int16_limit(acc * 1000);
 }
 
+#ifdef MODE_POS_VEL_TQE_KP_KD
 void motor::pos_vel_tqe_kp_kd(float position, float velocity, float torque, float kp, float kd)
 {
     if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE_KP_KD;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_val_tqe_rpd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_TQE_KP_KD, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].val = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].tqe = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].rkp = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].rkd = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_val_tqe_rpd[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
@@ -377,21 +450,18 @@ void motor::pos_vel_tqe_kp_kd(float position, float velocity, float torque, floa
     p_cdc_tx_message->data.pos_val_tqe_rpd[MEM_INDEX_ID(id)].rkp = kp_float2int(kp, pos_vel_type, type_); 
     p_cdc_tx_message->data.pos_val_tqe_rpd[MEM_INDEX_ID(id)].rkd = kd_float2int(kd, pos_vel_type, type_);
 }
+#endif
 
 void motor::pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd)
 {
-    if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD2)
+    if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD_2)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
-        p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE_KP_KD2;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_val_tqe_rpd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_TQE_KP_KD_2;
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_TQE_KP_KD_2, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].val = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].tqe = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].rkp = 0x0000;
-            p_cdc_tx_message->data.pos_val_tqe_rpd[i].rkd = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_val_tqe_rpd[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
@@ -407,13 +477,10 @@ void motor::pos_vel_kp_kd(float position, float velocity, float kp, float kd)
     {
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_KP_KD;
-        p_cdc_tx_message->head.s.len = id_max * sizeof(motor_pos_val_rpd_s);
-        for (uint8_t i = 0; i < id_max; i++)
+        p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_KP_KD, id_max);
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_val_rpd[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_val_rpd[i].val = 0x0000;
-            p_cdc_tx_message->data.pos_val_rpd[i].rkp = 0x0000;
-            p_cdc_tx_message->data.pos_val_rpd[i].rkd = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_val_rpd[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
@@ -497,6 +564,7 @@ void motor::send_state_cmd()
 #include <chrono>
 void motor::fresh_data(uint8_t mode, uint8_t fault, int16_t position, int16_t velocity, int16_t torque)
 {
+    data.num++;
     data.mode = mode;
     data.fault = fault;
     data.position = pos_int2float(position, pos_vel_type);
@@ -641,4 +709,22 @@ void motor::print_version()
 void motor::set_type(motor_type t)
 {
     type_ = t;
+}
+
+
+void motor::set_tqe_adjust_flag(uint8_t flag)
+{
+    tqe_adjust_flag = flag;
+}
+
+
+uint8_t motor::get_tqe_adjust_flag()
+{
+    return tqe_adjust_flag;
+}
+
+
+void motor::set_num()
+{
+    data.num = 0;
 }

@@ -21,17 +21,19 @@ private:
     serial_driver *ser;
     cdc_tr_message_s cdc_tr_message;
     int id_max = 0;
-    float port_version = 0.0f;
+    uint16_t port_version = 0;
     fun_version fun_v = fun_v1;
     std::unordered_set<int> motors_id;
     int mode_flag = 0;
     std::vector<int> port_motor_id;
     std::vector<cdc_rx_motor_version_s *> motor_version;
+    cdc_rx_fdcan_state_s fdcan_state;
+    bool canport_error_output_flag = false;
 
 public:
-    canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams& canport_params);
+    canport(int _CANport_num, int _CANboard_num, serial_driver *_ser, CANPortParams& canport_params, bool _canport_error_output_flag);
 
-    float set_motor_num();
+    uint16_t set_motor_num();
     int set_reset_zero();
     int set_reset_zero(int id);
     void set_stop();
@@ -42,7 +44,7 @@ public:
     void send_get_motor_state_cmd();
     void send_get_motor_state_cmd2();
     void send_get_motor_version_cmd();
-    void set_fun_v(fun_version v);
+    void set_fun_v(fun_version v, uint16_t motor_version);
     void set_data_reset();
     void set_time_out(int16_t t_ms);
     void puch_motor(std::vector<motor *> *_Motors);
@@ -50,8 +52,10 @@ public:
     int get_motor_num();
     int get_canboard_id();
     int get_canport_id();
+    cdc_rx_fdcan_state_s &get_canport_state();
     void canboard_bootloader();
     void canboard_fdcan_reset();
+    void send_get_tqe_adjust_flag_cmd();
 };
 
 #endif

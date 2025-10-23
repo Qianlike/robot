@@ -75,6 +75,8 @@ struct RobotParams
     std::string Serial_Type;
     int Seial_baudrate;
     int CANboard_num;
+    bool board_special_flag;
+    bool canport_error_output_flag;
     std::map<std::string, CANBoardParams, MotorNameComparator> CANboards;
 };
 

@@ -1,12 +1,12 @@
 #include "canboard.hpp"
 
 
-canboard::canboard(int _CANboard_ID, std::vector<serial_driver *> *ser, CANBoardParams &canboard_params)
+canboard::canboard(int _CANboard_ID, std::vector<serial_driver *> *ser, CANBoardParams &canboard_params, bool _canport_error_output_flag)
 {   
     auto it = canboard_params.CANports.begin();
     for (size_t j = 1; j <= canboard_params.CANport_num; j++, it++) // 一个串口对应一个CANport
     {
-        CANport.push_back(new canport(j, _CANboard_ID, (*ser)[(_CANboard_ID - 1) * CANport_num + j - 1], it->second));
+        CANport.push_back(new canport(j, _CANboard_ID, (*ser)[(_CANboard_ID - 1) * CANport_num + j - 1], it->second, _canport_error_output_flag));
     }
 }
 
@@ -59,9 +59,9 @@ void canboard::set_reset()
 }
 
 
-float canboard::set_port_motor_num()
+uint16_t canboard::set_port_motor_num()
 {
-    float v = 0;
+    uint16_t v = 0;
     for (canport *c : CANport)
     {
         v = c->set_motor_num();
@@ -98,20 +98,20 @@ void canboard::send_get_motor_version_cmd()
 }
 
 
-void canboard::set_fun_v(fun_version v)
+void canboard::set_fun_v(fun_version v, uint16_t motor_version)
 {
     for (canport *c : CANport)
     {
-        c->set_fun_v(v);
+        c->set_fun_v(v, motor_version);
     }
 }
 
 
-void canboard::set_data_reset()
+void canboard::send_get_tqe_adjust_flag_cmd()
 {
     for (canport *c : CANport)
     {
-        c->set_data_reset();
+        c->send_get_tqe_adjust_flag_cmd();
     }
 }
 
@@ -137,15 +137,6 @@ void canboard::set_reset_zero()
         std::this_thread::sleep_for(std::chrono::seconds(1));
         c->motor_send_2();
         std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
-
-
-void canboard::set_motor_runzero()
-{
-    for (canport *c : CANport)
-    {
-        c->set_motor_runzero();
     }
 }
 
