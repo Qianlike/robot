@@ -8,9 +8,36 @@ struct MotorNameComparator
 {
     bool operator()(const std::string& a, const std::string& b) const 
     {
-        int numA = std::stoi(a.substr(5)); // 假设格式为 "MotorX"，提取 X
-        int numB = std::stoi(b.substr(5));
+        int numA = extractNumber(a);
+        int numB = extractNumber(b);
+
         return numA < numB;
+    }
+
+private:
+    int extractNumber(const std::string& str) const 
+    {
+        std::string numberStr;
+        
+
+        for (char ch : str) 
+        {
+            if (std::isdigit(ch)) 
+            {
+                numberStr += ch;
+            } 
+            else if (!numberStr.empty()) 
+            {
+                break;
+            }
+        }
+        
+        if (numberStr.empty()) 
+        {
+            throw std::invalid_argument("No numeric value found in string: " + str);
+        }
+
+        return std::stoi(numberStr);
     }
 };
 
