@@ -66,12 +66,12 @@ void serial_driver::recv_1for6_42()
                     }
                     else
                     {
-                        printf("cmd %02X  ", SOF.cmd);
-                        for (int i = 0; i < SOF.len; i++)
-                        {
-                            printf("0x%02X ", cdc_rx_message_data.data[i]);
-                        }
-                        printf("\n");
+                        // printf("cmd %02X  ", SOF.cmd);
+                        // for (int i = 0; i < SOF.len; i++)
+                        // {
+                        //     printf("0x%02X ", cdc_rx_message_data.data[i]);
+                        // }
+                        // printf("\n");
 
                         switch (SOF.cmd)
                         {
