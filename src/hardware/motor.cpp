@@ -452,7 +452,14 @@ void motor::pos_vel_tqe_kp_kd(float position, float velocity, float torque, floa
 }
 #endif
 
+
 void motor::pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd)
+{
+    pos_vel_tqe_kp_kd_2(position, velocity, torque, kp, kd);
+}
+
+
+void motor::pos_vel_tqe_kp_kd_2(float position, float velocity, float torque, float kp, float kd)
 {
     if (p_cdc_tx_message->head.s.cmd != MODE_POS_VEL_TQE_KP_KD_2)
     {

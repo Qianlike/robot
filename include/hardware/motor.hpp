@@ -157,11 +157,9 @@ public:
     void pos_vel_tqe_kp_kd(float position, float velocity, float torque, float Kp, float Kd);
 #endif
     void pos_vel_tqe_kp_kd2(float position, float velocity, float torque, float kp, float kd);
+    void pos_vel_tqe_kp_kd_2(float position, float velocity, float torque, float kp, float kd);
     void pos_vel_kp_kd(float position, float velocity, float Kp, float Kd);
     void pos_vel_acc(float position, float velocity, float acc);
-    void pos_vel_rkp_rkd(float position, float velocity, float rKp, float rKd);
-    void pos_vel_kp_ki_kd(float position, float velocity, float torque, float kp, float ki, float kd);
-    void pos_vel_tqe_rkp_rkd(float position, float velocity, float torque, float rKp, float rKd);
 
     void stop();
     void brake();

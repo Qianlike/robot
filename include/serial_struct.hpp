@@ -4,11 +4,7 @@
 #include "crc16.hpp"
 #include "crc8.hpp"
 
-#define ROS_WARN_STREAM(x)
-#define ROS_DEBUG printf
-#define ROS_INFO printf
-#define ROS_WARN printf
-#define ROS_INFO printf
+#define ROS_INFO(format, ...)  printf(format "\n", ##__VA_ARGS__)
 #define ROS_ERROR(format, ...) printf("\033[1;31m" format "\n\033[0m", ##__VA_ARGS__)
 #define ROS_DEBUG_STREAM(x)
 
@@ -23,7 +19,7 @@
 #define  MODE_TIME_OUT              0x85
 
 #define  MODE_POS_VEL_TQE           0X90
-// #define  MODE_POS_VEL_TQE_KP_KD     0X93  // 弃用
+// #define  MODE_POS_VEL_TQE_KP_KD     0X93  // 将弃用
 // #define  MODE_POS_VEL_TQE_KP_KI_KD  0X98  // 弃用
 #define  MODE_POS_VEL_KP_KD         0X9E
 // #define  MODE_POS_VEL_TQE_RKP_RKD   0XA3  // 弃用
