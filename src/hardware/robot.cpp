@@ -89,7 +89,6 @@ namespace hightorque_robot
         set_stop();
         set_reset();
         printf("motor stop\n");
-        fflush(stdout);
 
         for (serial_driver *s : ser)
         {
@@ -105,11 +104,13 @@ namespace hightorque_robot
             if (thread.joinable())
                 thread.join();
         }
-        
+
+        this->lcm_en = false;
         if(pub_thread_.joinable())
         {
             pub_thread_.join(); 
         }
+
         error_check_flag = false;
         if(error_check_thread_.joinable())
         {

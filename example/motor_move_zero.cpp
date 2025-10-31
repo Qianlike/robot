@@ -2,13 +2,27 @@
 #include <iostream>
 
 
+#include <csignal>
+#include <atomic>
+#include <chrono>
+#include <thread>
+
+
+std::atomic<bool> exitFlag(false);
+void signalHandler(int signum) 
+{
+    exitFlag.store(true);
+}
+
+
 int main(int argc, char **argv)
 {
+    std::signal(SIGINT, signalHandler);
     hightorque_robot::robot rb;
     rb.lcm_enable();
     int cont = 0;
 
-    while(1)
+    while(!exitFlag.load())
     {
         int i = 0;
         for (motor *m : rb.Motors)

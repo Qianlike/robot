@@ -1,16 +1,29 @@
 #include "robot.hpp"
 #include <iostream>
 
+#include <csignal>
+#include <atomic>
+#include <chrono>
+#include <thread>
+
+
+std::atomic<bool> exitFlag(false);
+void signalHandler(int signum) 
+{
+    exitFlag.store(true);
+}
+
 
 int main(int argc, char **argv)
 {
+    std::signal(SIGINT, signalHandler);
     hightorque_robot::robot rb;
     rb.lcm_enable();
     const int motor_num = rb.Motors.size();
     int cont = 0;
     float angle = 0.2;
 
-    while(1)
+    while(!exitFlag.load())
     {
         for (int i = 0; i < motor_num; i++)
         {
@@ -40,6 +53,6 @@ int main(int argc, char **argv)
         }
         // printf("\n");
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }

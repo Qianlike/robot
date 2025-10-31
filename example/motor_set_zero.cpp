@@ -1,14 +1,28 @@
 #include "robot.hpp"
 #include <iostream>
 
+#include <csignal>
+#include <atomic>
+#include <chrono>
+#include <thread>
+
+
+std::atomic<bool> exitFlag(false);
+void signalHandler(int signum) 
+{
+    exitFlag.store(true);
+}
+
+
 int main(int argc, char **argv)
 {
+    std::signal(SIGINT, signalHandler);
     hightorque_robot::robot rb;
     rb.lcm_enable();
 
     rb.set_reset_zero();  // 全部电机重置零位
 
-    while(1)
+    while(!exitFlag.load())
     {
         rb.send_get_motor_state_cmd();  // 不控制电机，查询电机状态
 
