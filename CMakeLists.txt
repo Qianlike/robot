@@ -38,9 +38,18 @@ add_library(hightorque_robot SHARED ${serial_SRCS})
 target_link_libraries(hightorque_robot rt pthread ${SERIALPORT_LIBRARY} serial lcm yaml-cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/msg)
 
+
+add_executable(canboard_update example/canboard_update.cpp)
+target_link_libraries(canboard_update hightorque_robot)
+
+add_executable(motor_feedack example/motor_feedack.cpp)
+target_link_libraries(motor_feedack hightorque_robot)
+
+add_executable(motor_move_zero example/motor_move_zero.cpp)
+target_link_libraries(motor_move_zero hightorque_robot)
+
 add_executable(motor_run example/motor_run.cpp)
 target_link_libraries(motor_run hightorque_robot)
 
-add_executable(motor_msg_subscriber example/motor_msg_subscriber.cpp)
-target_link_libraries(motor_msg_subscriber hightorque_robot)
-
+add_executable(motor_set_zero example/motor_set_zero.cpp)
+target_link_libraries(motor_set_zero hightorque_robot)

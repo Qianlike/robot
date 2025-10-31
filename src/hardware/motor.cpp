@@ -221,7 +221,7 @@ inline float motor::vel_int2float(int16_t in_data, uint8_t type)
     }
 }
 
-uint8_t motor::get_data_len(uint8_t mode, uint16_t num)
+uint16_t motor::get_data_len(uint8_t mode, uint16_t num)
 {
     uint8_t motor_one_len = 0;
     switch (mode)
@@ -266,7 +266,7 @@ uint8_t motor::get_data_len(uint8_t mode, uint16_t num)
 
     if (rem <= 6)
     {
-        rem_len = len;
+        rem_len = rem;
     }
     else if (rem <= 10)
     {
