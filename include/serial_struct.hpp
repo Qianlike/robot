@@ -5,7 +5,7 @@
 #include "crc8.hpp"
 
 #define ROS_INFO(format, ...)  printf(format "\n", ##__VA_ARGS__)
-#define ROS_ERROR(format, ...) printf("\033[1;31m" format "\n\033[0m", ##__VA_ARGS__)
+#define ROS_ERROR(format, ...) printf("\033[1;31m" format "\033[0m\n", ##__VA_ARGS__)
 #define ROS_DEBUG_STREAM(x)
 
 
