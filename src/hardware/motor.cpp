@@ -232,6 +232,9 @@ uint16_t motor::get_data_len(uint8_t mode, uint16_t num)
         case MODE_VOLTAGE:
         case MODE_CURRENT:
         case MODE_TIME_OUT:
+        case MODE_STOP:
+        case MODE_BRAKE:
+        case MODE_RESET:
             motor_one_len = 2;
             break;
         case MODE_POS_VEL_TQE:
@@ -456,12 +459,9 @@ void motor::pos_vel_kp_kd(float position, float velocity, float kp, float kd)
         p_cdc_tx_message->head.s.head = 0xF7;
         p_cdc_tx_message->head.s.cmd = MODE_POS_VEL_KP_KD;
         p_cdc_tx_message->head.s.len = get_data_len(MODE_POS_VEL_KP_KD, id_max);
-        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(motor_pos_vel_kp_kd_s); i++)
+        for (uint8_t i = 0; i < p_cdc_tx_message->head.s.len / sizeof(int16_t); i++)
         {
-            p_cdc_tx_message->data.pos_vel_kp_kd[i].pos = 0x8000;
-            p_cdc_tx_message->data.pos_vel_kp_kd[i].vel = 0x0000;
-            p_cdc_tx_message->data.pos_vel_kp_kd[i].kp = 0x0000;
-            p_cdc_tx_message->data.pos_vel_kp_kd[i].kd = 0x0000;
+            p_cdc_tx_message->data.data16[i] = 0x8000;
         }
     }
     p_cdc_tx_message->data.pos_vel_kp_kd[MEM_INDEX_ID(id)].pos = pos_float2int(position, pos_vel_type);
