@@ -72,6 +72,16 @@ target_link_libraries(hightorque_robot
         pthread
 )
 
+
+add_executable(canboard_update example/canboard_update.cpp)
+target_link_libraries(canboard_update hightorque_robot)
+
+add_executable(motor_feedack example/motor_feedack.cpp)
+target_link_libraries(motor_feedack hightorque_robot)
+
+add_executable(motor_move_zero example/motor_move_zero.cpp)
+target_link_libraries(motor_move_zero hightorque_robot)
+
 add_executable(motor_run example/motor_run.cpp)
 target_link_libraries(motor_run hightorque_robot)
 
@@ -126,3 +136,5 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/hightorque_robotConfigVersion.cmake
     DESTINATION lib/cmake/hightorque_robot
 )
+add_executable(motor_set_zero example/motor_set_zero.cpp)
+target_link_libraries(motor_set_zero hightorque_robot)

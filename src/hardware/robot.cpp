@@ -39,7 +39,8 @@ namespace hightorque_robot
         motor_timeout_ms = robot_params.motor_timeout_ms;
         CANboard_num = robot_params.CANboard_num;
         Serial_Type = robot_params.Serial_Type;
-
+        canport_error_output_flag = robot_params.canport_error_output_flag;
+        board_special_flag = robot_params.board_special_flag;
 
         if (motor_timeout_ms < 0 || motor_timeout_ms > 32760)
         {
@@ -58,7 +59,7 @@ namespace hightorque_robot
         auto it = robot_params.CANboards.begin();
         for (size_t i = 1; i <= CANboard_num; i++, it++)
         {
-            CANboards.push_back(canboard(i, &ser, it->second));
+            CANboards.push_back(canboard(i, &ser, it->second, canport_error_output_flag));
         }
 
         for (canboard &cb : CANboards)
@@ -70,12 +71,12 @@ namespace hightorque_robot
             cp->puch_motor(&Motors);
         }
         set_port_motor_num(); // 设置通道上挂载的电机数，并获取主控板固件版本号
-        if (slave_v >= 4.1f) 
+        if (slave_v >= COMBINE_VERSION(4, 1, 0))
         {
             canboard_fdcan_reset();
         }
 
-        if (slave_v < 4.0f)  // 检测电机连接是否正常
+        if (slave_v < COMBINE_VERSION(4, 0, 0))  // 检测电机连接是否正常
         {
             fun_v = fun_v1;
             chevk_motor_connection_position();   
@@ -104,17 +105,17 @@ namespace hightorque_robot
     robot::~robot()
     {
         // publish_joint_state=0;
+        set_stop();
+        set_stop();
         set_reset();
-        set_reset();
-        set_reset();
+        printf("motor stop\n");
 
-        // 关键修复：先关闭所有串口，中断阻塞的读取
         for (serial_driver *s : ser)
         {
             if (s) 
             {
                 s->set_run_flag(false);
-                s->close();  // 添加这一行！
+                s->close();
             }
         }
 
@@ -123,17 +124,18 @@ namespace hightorque_robot
             if (thread.joinable())
                 thread.join();
         }
-        
+
+        this->lcm_en = false;
         if(pub_thread_.joinable())
         {
             pub_thread_.join(); 
         }
+
         error_check_flag = false;
         if(error_check_thread_.joinable())
         {
             error_check_thread_.join(); 
         }
-        
     }
 
     void robot::lcm_enable()
@@ -289,15 +291,29 @@ namespace hightorque_robot
             {
                 if (pid == 0xFFFF)
                 {
-                    switch (vid)
+                    if (board_special_flag)
                     {
-                    case (0xFAE1):
-                    case (0xCAE1):
-                        r = 1;
-                        break;
-                    default:
-                        r = -3;
-                        break;
+                        if (vid == 0xFAE1)
+                        {
+                            r = 1;
+                        }
+                        else
+                        {
+                            r = -3;
+                        }
+                    }
+                    else
+                    {
+                        switch (vid)
+                        {
+                        case (0xCAF1):
+                        case (0xCAE1):
+                            r = 1;
+                            break;
+                        default:
+                            r = -3;
+                            break;
+                        }
                     }
                 }
                 else
@@ -382,7 +398,7 @@ namespace hightorque_robot
 
                 serial_id_old.push_back(serial_id);
 
-                serial_driver *s = new serial_driver(&str[serial_id - 1], Seial_baudrate);
+                serial_driver *s = new serial_driver(&str[serial_id - 1], Seial_baudrate, canport_error_output_flag);
                 ser.push_back(s);
                 ser_recv_threads.push_back(std::thread(&serial_driver::recv_1for6_42, s));
             }
@@ -477,7 +493,7 @@ namespace hightorque_robot
                     auto it = robot_params.CANboards.begin();
                     for (size_t i = 1; i <= CANboard_num; i++, it++)
                     {
-                        CANboards.push_back(canboard(i, &ser, it->second));
+                        CANboards.push_back(canboard(i, &ser, it->second, canport_error_output_flag));
                     }
 
                     for (canboard &cb : CANboards)
@@ -579,10 +595,10 @@ namespace hightorque_robot
 
     void robot::send_get_motor_version_cmd()
     {
-        if (slave_v < 4.0f)
+        if (slave_v < COMBINE_VERSION(4, 0, 0))
         {
             std::cerr << "\033[1;31m << The current communication board does not support this function!!! << \033[0m" << std::endl;
-            exit(-1);
+            exit(0);
         }
 
         for (canboard &cb : CANboards)
@@ -594,7 +610,8 @@ namespace hightorque_robot
 
     void robot::motor_version_detection()
     {
-        uint16_t v_old = 0xFFFF;
+        uint16_t v_min = 0xFFFF;
+        uint16_t v_max = 0;
         uint16_t i = 0;
 
         std::cout << "---------------motor version---------------------" << std::endl;
@@ -602,27 +619,32 @@ namespace hightorque_robot
         {
             const auto v = m->get_version();
             printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i++, v.id, v.major, v.minor, v.patch);
-            const uint16_t v_new = v.major << 12 | (v.minor << 4) | v.patch;
-            if (v_old > v_new && v_new != 0)
+            const uint16_t v_new = COMBINE_VERSION(v.major, v.minor, v.patch);
+            if (v_min > v_new && v_new != 0)
             {
-                v_old = v_new;
+                v_min = v_new;
+            }
+
+            if (v_max < v_new)
+            {
+                v_max = v_new;
             }
         }
         std::cout << "-------------------------------------------------" << std::endl;
 
-        if (v_old >= COMBINE_VERSION(4, 4, 6))
+        if (v_min >= COMBINE_VERSION(4, 4, 6))
         {
             fun_v = fun_v5;
         }
-        else if (v_old >= COMBINE_VERSION(4, 2, 3))
+        else if (v_min >= COMBINE_VERSION(4, 2, 3))
         {
             fun_v = fun_v4;
         }
-        else if (v_old >= COMBINE_VERSION(4, 2, 2))
+        else if (v_min >= COMBINE_VERSION(4, 2, 2))
         {
             fun_v = fun_v3;
         }
-        else if (v_old >= COMBINE_VERSION(4, 2, 0))
+        else if (v_min >= COMBINE_VERSION(4, 2, 0))
         {
             fun_v = fun_v2;
         }
@@ -633,46 +655,81 @@ namespace hightorque_robot
 
         for (canboard &cb : CANboards)
         {
-            cb.set_fun_v(fun_v);
+            cb.set_fun_v(fun_v, v_min);
         }
 
-        // std::cout << "fun_v = " << fun_v << std::endl;    
-
-        uint8_t v = 0;
-        uint8_t v2 = 0;
-
-        for (motor *m : Motors)
+        printf("fun_v = %d, motor_min_v = %d.%d.%d, motor_max_v = %d.%d.%d\n", fun_v, 
+            GET_MAJOR_VERSION(v_min), GET_MINOR_VERSION(v_min), GET_PATCH_VERSION(v_min),
+            GET_MAJOR_VERSION(v_max), GET_MINOR_VERSION(v_max), GET_PATCH_VERSION(v_max));
+        
+        if (slave_v < COMBINE_VERSION(4, 7, 0) || v_max < COMBINE_VERSION(4, 6, 0))
         {
-            v = m->get_version().major;
+            return;
+        }
 
-            if (v == 5 && v2 != 0 && v != v2)
-            {
-                ROS_ERROR("The motor version is notInconsistent motor version!!!");
-                exit(-1);
-            }
+        chevk_tqe_adjust_flag();
+    }
 
-            v2 = v;
-
-            if (v == 5)
-            {
-                m->set_type(mGeneral);
-            }
+    void robot::send_get_tqe_adjust_flag_cmd()
+    {
+        for (canboard &cb : CANboards)
+        {
+            cb.send_get_tqe_adjust_flag_cmd();
         }
     }
 
 
-    // 将所有数据置为 0xFF
-    void robot::set_data_reset()
+    void robot::chevk_tqe_adjust_flag()
     {
-        if (fun_v < fun_v3)
+        int t = 0;
+        std::vector<int> board;
+        std::vector<int> port;
+        std::vector<int> id;
+
+        printf("Check the torque adjustment mark\n");
+        while (t++ < 20)
         {
-            std::cerr << "\033[1;31mThe current feature version is not supported!!!\033[0m" << std::endl;
-            exit(-3);
+            send_get_tqe_adjust_flag_cmd();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            std::vector<int>().swap(board);
+            std::vector<int>().swap(port);
+            std::vector<int>().swap(id);
+            for (motor *m : Motors)
+            {
+                cdc_rx_motor_version_s &v = m->get_version();
+                uint8_t tqe_flag = m->get_tqe_adjust_flag();
+
+                if (COMBINE_VERSION(v.major, v.minor, v.patch) >= COMBINE_VERSION(4, 6, 0) && tqe_flag == 0xFF)
+                {
+                    board.push_back(m->get_motor_belong_canboard());
+                    port.push_back(m->get_motor_belong_canport());
+                    id.push_back(m->get_motor_id());
+                }
+                else if (tqe_flag == 1)
+                {
+                    m->set_type(mNone);
+                }
+            }
+
+            if (id.size() == 0)
+            {
+                break;
+            }
+
+            if (t % 5 == 0)
+            {
+                ROS_INFO(".");
+            }
         }
 
-        for (canboard &cb : CANboards)
+        if (id.size() != 0)
         {
-            cb.set_data_reset();
+            for (int i = 0; i < id.size(); i++)
+            {
+                ROS_ERROR("CANboard(%d) CANport(%d) id(%d) Motor Failed to read torque adjust flag!!!", board[i], port[i], id[i]);
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(3));
         }
     }
 
@@ -737,7 +794,7 @@ namespace hightorque_robot
     }
 
 
-void robot::chevk_motor_connection_position()
+    void robot::chevk_motor_connection_position()
     {
         int t = 0;
         int num = 0;
@@ -853,20 +910,6 @@ void robot::chevk_motor_connection_position()
                 std::cerr << "Motor " << motor << " reset to zero position failed." << std::endl;
             }
         }
-    }
-
-
-    void robot::set_motor_runzero()
-    {
-        for (int i = 0; i < 5; i++)
-        {
-            for (canboard &cb : CANboards)
-            {
-                cb.set_motor_runzero();
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
 

@@ -57,6 +57,29 @@ void readConfigParam(const YAML::Node &node, const std::string &key, T &value)
 }
 
 
+template <typename T>
+void readConfigParam(const YAML::Node &node, const std::string &key, T &value, T default_value)
+{
+    if (node[key])
+    {
+        try
+        {
+            value = node[key].as<T>();
+            // std::cout << key << ": " << value << std::endl;
+        }
+        catch (const YAML::BadConversion &e)
+        {
+            std::cerr << "\033[1;31m" << "Error: Failed to convert '" << key << "' to the required type: " << e.what() << "\033[0m" << std::endl;
+            exit(-1);
+        }
+    }
+    else
+    {
+        value = default_value;
+    }
+}
+
+
 RobotParams parseRobotParams(const std::string &filePath)
 {
     RobotParams params;
@@ -70,7 +93,8 @@ RobotParams parseRobotParams(const std::string &filePath)
         readConfigParam(robotNode, "Seial_baudrate", params.Seial_baudrate);
         readConfigParam(robotNode, "motor_timeout_ms", params.motor_timeout_ms);
         readConfigParam(robotNode, "CANboard_num", params.CANboard_num);
-
+        readConfigParam(robotNode, "canport_error_output_flag", params.canport_error_output_flag, false);
+        readConfigParam(robotNode, "board_special_flag", params.board_special_flag, false);
 
         if (robotNode["CANboard"])
         {

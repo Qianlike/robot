@@ -19,32 +19,11 @@ int main(int argc, char **argv)
     std::signal(SIGINT, signalHandler);
     hightorque_robot::robot rb;
     rb.lcm_enable();
-    const int motor_num = rb.Motors.size();
-    int cont = 0;
-    float angle = 0.2;
 
     while(!exitFlag.load())
     {
-        for (int i = 0; i < motor_num; i++)
-        {
-            if(i < motor_num / 2)
-            {
-                rb.Motors[i]->pos_vel_MAXtqe(angle, 0.3, 10);  
-            }
-            else
-            {
-                rb.Motors[i]->pos_vel_MAXtqe(-angle, 0.3, 10);  
-            }
-        }
-        rb.motor_send_cmd();
+        rb.send_get_motor_state_cmd();  // 发送查询电机状态指令（不控制电机）
 
-        ++cont;
-        if(cont >= 200)
-        {
-            cont = 0;
-            angle *= -1;
-        }
-        
         for (motor *m : rb.Motors)
         {
             motor_back_t motor = *m->get_current_motor_state();  // 从缓存中获取电机状态
@@ -52,7 +31,7 @@ int main(int argc, char **argv)
             // printf(".2f  ", motor.position);
         }
         // printf("\n");
-        
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
+

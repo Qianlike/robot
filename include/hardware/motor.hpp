@@ -40,7 +40,8 @@ enum motor_type  // 注释掉的暂无力矩修正系数
 
     m5047_36_2,
 
-    mGeneral,  // 力矩已在电机内部修正
+    mGeneral, 
+    mNone,  // 力矩已在电机内部修正
 };
 
 
@@ -71,7 +72,8 @@ const std::unordered_map<std::string, motor_type> motor_type2 =  // 注释掉的
     {"60SG_35", motor_type::m60sg_35},
     {"60BM_35", motor_type::m60bm_35},
     {"5047_36_2", motor_type::m5047_36_2},  // 新版5047_36（目前的电机都是新款）的力矩系数，建议新算法的5047_36电机都采用此系数
-    {"General", motor_type::mGeneral},  // 力矩已在电机内部修正
+    {"General", motor_type::mGeneral},  // 遇到暂无力矩修正系数的电机时临时用
+    {"NONE", motor_type::mNone},        // 无修正，已在电机内部修正
 };
 
 const std::unordered_map<motor_type, float> motor_tqe_adj = 
@@ -89,7 +91,8 @@ const std::unordered_map<motor_type, float> motor_tqe_adj =
     {motor_type::m60sg_35,   0.7942f},
     {motor_type::m60bm_35,   0.7942f},
     {motor_type::m5043_20,   0.9660f},
-    {motor_type::mGeneral,   0.5000f}
+    {motor_type::mGeneral,   0.5000f},
+    {motor_type::mNone,      1.0000f}
 };
 
 
@@ -120,6 +123,7 @@ private:
     float tor_upper = 0.0f;
     float tor_lower = 0.0f;
     cdc_rx_motor_version_s version = {0};
+    uint8_t tqe_adjust_flag = 0xff;
 
 public:
     motor_pos_vel_tqe_kp_kd_s cmd_int16_5param;
@@ -140,7 +144,11 @@ public:
     inline int16_t ki_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t kd_float2int(float in_data, uint8_t type, motor_type motor_type);
     inline int16_t int16_limit(int32_t data);
+<<<<<<< HEAD
     uint8_t get_data_len(uint8_t mode, uint16_t num);
+=======
+    uint16_t get_data_len(uint8_t mode, uint16_t num);
+>>>>>>> origin/v4.5.x
 
     void position(float position);
     void velocity(float velocity);
@@ -175,5 +183,8 @@ public:
     void set_version(cdc_rx_motor_version_s &v);
     void print_version();
     void set_type(motor_type t);
+    void set_tqe_adjust_flag(uint8_t flag);
+    uint8_t get_tqe_adjust_flag();
+    void set_num();
 };
 #endif
