@@ -6,40 +6,12 @@
 
 struct MotorNameComparator 
 {
-    bool operator()(const std::string& a, const std::string& b) const 
-    {
-        int numA = extractNumber(a);
-        int numB = extractNumber(b);
-
-        return numA < numB;
-    }
-
+    bool operator()(const std::string& a, const std::string& b) const;
+    
 private:
-    int extractNumber(const std::string& str) const 
-    {
-        std::string numberStr;
-        
-
-        for (char ch : str) 
-        {
-            if (std::isdigit(ch)) 
-            {
-                numberStr += ch;
-            } 
-            else if (!numberStr.empty()) 
-            {
-                break;
-            }
-        }
-        
-        if (numberStr.empty()) 
-        {
-            throw std::invalid_argument("No numeric value found in string: " + str);
-        }
-
-        return std::stoi(numberStr);
-    }
+    int extractNumber(const std::string& str) const;
 };
+
 
 
 struct MotorParams 
