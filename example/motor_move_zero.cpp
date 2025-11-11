@@ -34,7 +34,7 @@ int main(int argc, char **argv)
             // printf(".2f  ", motor.position);
         }
         // printf("\n");
-        rb.motor_send_2();
+        rb.motor_send_cmd();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -164,7 +164,7 @@ void serial_driver::recv_1for6_42()
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state2[i].mode,
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state2[i].fault,
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state2[i].pos,
-                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].val,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state2[i].vel,
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state2[i].tqe);
                                     }
                                 }
@@ -198,7 +198,7 @@ void serial_driver::recv_1for6_42()
                                     {
                                         it->second->fresh_data(0,0,
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state[i].pos,
-                                                        cdc_rx_message_data.fdcan_motor_state.motor_state[i].val,
+                                                        cdc_rx_message_data.fdcan_motor_state.motor_state[i].vel,
                                                         cdc_rx_message_data.fdcan_motor_state.motor_state[i].tqe);
                                     }
                                 }
