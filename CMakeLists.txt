@@ -10,22 +10,11 @@ set(VERSION_MINOR 4)
 set(VERSION_PATCH 7)
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
-find_package(lcm REQUIRED)
-find_package(yaml-cpp REQUIRED)
+add_subdirectory(third_part/lcm)
+add_subdirectory(third_part/serial_cmake)
 
-find_path(SERIAL_INCLUDE_DIR serial/serial.h
-  PATHS /usr/local/include /usr/include
-)
-find_library(SERIAL_LIBRARY serial
-  PATHS /usr/local/lib /usr/lib
-)
-if(NOT SERIAL_INCLUDE_DIR OR NOT SERIAL_LIBRARY)
-  message(FATAL_ERROR "serial library not found! Please install it.")
-else()
-  message(STATUS "Found serial include: ${SERIAL_INCLUDE_DIR}")
-  message(STATUS "Found serial library: ${SERIAL_LIBRARY}")
-endif()
-include_directories(${SERIAL_INCLUDE_DIR})
+# find_package(lcm REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 find_library(SERIALPORT_LIBRARY serialport)
 if(NOT SERIALPORT_LIBRARY)
@@ -65,7 +54,7 @@ target_link_libraries(hightorque_robot
     PUBLIC 
         lcm
         yaml-cpp
-        ${SERIAL_LIBRARY}       # wjwwood/serial
+        serial_cmake
         ${SERIALPORT_LIBRARY}   # libserialport
     PRIVATE 
         rt 
