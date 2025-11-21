@@ -22,7 +22,11 @@ namespace hightorque_robot
     {
         auto config = YAML::LoadFile(config_path);
         std::cout << "robot_config: " << config["robot"]["name"].as<std::string>() << std::endl;
-        auto param_file = config["robot"]["param_file"].as<std::string>();
+        auto param_file = config_path;
+        if (config["robot"]["param_file"])
+        {
+            param_file = config["robot"]["param_file"].as<std::string>();
+        }
         
         // 如果param_file是相对路径，则相对于config_path的目录
         if (param_file[0] != '/') {
