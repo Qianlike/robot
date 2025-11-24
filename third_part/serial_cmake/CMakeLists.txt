@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(serial_cmake)
+project(serial_cmake_cmake)
 
 # 包含版本信息
 include(cmake/version.cmake)
@@ -39,27 +39,27 @@ install(DIRECTORY include/serial
 
 # 安装：库文件
 install(TARGETS ${PROJECT_NAME}
-    EXPORT serialTargets
+    EXPORT serial_cmakeTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 # 导出Targets
-install(EXPORT serialTargets
-    FILE serialTargets.cmake
+install(EXPORT serial_cmakeTargets
+    FILE serial_cmakeTargets.cmake
     NAMESPACE serial::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial_cmake
 )
 
 # 生成Config文件
 configure_package_config_file(
-    cmake/serialConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/serialConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial
+    cmake/serial_cmakeConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/serial_cmakeConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial_cmake
 )
 
 # 安装Config
 install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/serialConfig.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial
+    ${CMAKE_CURRENT_BINARY_DIR}/serial_cmakeConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/serial_cmake
 )
