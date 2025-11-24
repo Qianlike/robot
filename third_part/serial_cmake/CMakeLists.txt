@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(serial_cmake_cmake)
+project(serial_cmake)
 
 # 包含版本信息
 include(cmake/version.cmake)
