@@ -83,12 +83,12 @@ namespace hightorque_robot
         if (slave_v < COMBINE_VERSION(4, 0, 0))  // 检测电机连接是否正常
         {
             fun_v = fun_v1;
-            chevk_motor_connection_position();   
+            check_motor_connection_position();   
         }
         else
         {
             fun_v = fun_v2;
-            chevk_motor_connection_version();
+            check_motor_connection_version();
         }
 
         if (motor_timeout_ms != 0)
@@ -510,7 +510,7 @@ namespace hightorque_robot
                         cp->puch_motor(&Motors);
                     }
                     set_port_motor_num(); // 设置通道上挂载的电机数，并获取主控板固件版本号
-                    chevk_motor_connection_version();  // 检测电机连接是否正常
+                    check_motor_connection_version();  // 检测电机连接是否正常
                     error_run_state = error_check;
                     std::cerr << "\033[1;31mreconnect end\033[0m" << std::endl;
                 }
@@ -622,8 +622,8 @@ namespace hightorque_robot
         for (motor *m : Motors)
         {
             const auto v = m->get_version();
-            printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i++, v.id, v.major, v.minor, v.patch);
-            const uint16_t v_new = COMBINE_VERSION(v.major, v.minor, v.patch);
+            printf("motors[%02d]: id:%02d v%d.%d.%d\r\n", i++, v->id, v->major, v->minor, v->patch);
+            const uint16_t v_new = COMBINE_VERSION(v->major, v->minor, v->patch);
             if (v_min > v_new && v_new != 0)
             {
                 v_min = v_new;
@@ -671,7 +671,7 @@ namespace hightorque_robot
             return;
         }
 
-        chevk_tqe_adjust_flag();
+        check_tqe_adjust_flag();
     }
 
     void robot::send_get_tqe_adjust_flag_cmd()
@@ -683,7 +683,7 @@ namespace hightorque_robot
     }
 
 
-    void robot::chevk_tqe_adjust_flag()
+    void robot::check_tqe_adjust_flag()
     {
         int t = 0;
         std::vector<int> board;
@@ -701,10 +701,10 @@ namespace hightorque_robot
             std::vector<int>().swap(id);
             for (motor *m : Motors)
             {
-                cdc_rx_motor_version_s &v = m->get_version();
+                cdc_rx_motor_version_s* v = m->get_version();
                 uint8_t tqe_flag = m->get_tqe_adjust_flag();
 
-                if (COMBINE_VERSION(v.major, v.minor, v.patch) >= COMBINE_VERSION(4, 6, 0) && tqe_flag == 0xFF)
+                if (COMBINE_VERSION(v->major, v->minor, v->patch) >= COMBINE_VERSION(4, 6, 0) && tqe_flag == 0xFF)
                 {
                     board.push_back(m->get_motor_belong_canboard());
                     port.push_back(m->get_motor_belong_canport());
@@ -738,7 +738,7 @@ namespace hightorque_robot
     }
 
 
-    void robot::chevk_motor_connection_version()
+    void robot::check_motor_connection_version()
     {
         int t = 0;
         int num = 0;
@@ -758,8 +758,8 @@ namespace hightorque_robot
             std::vector<int>().swap(id);
             for (motor *m : Motors)
             {
-                cdc_rx_motor_version_s &v = m->get_version();
-                if (v.major != 0)
+                cdc_rx_motor_version_s *v = m->get_version();
+                if (v->major != 0)
                 {
                     ++num;
                 }
@@ -798,7 +798,7 @@ namespace hightorque_robot
     }
 
 
-    void robot::chevk_motor_connection_position()
+    void robot::check_motor_connection_position()
     {
         int t = 0;
         int num = 0;

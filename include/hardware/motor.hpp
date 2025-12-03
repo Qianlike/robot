@@ -175,7 +175,7 @@ public:
     size_t return_size_motor_pos_vel_tqe_kp_kd_s();
     motor_back_t *get_current_motor_state();
     std::string get_motor_name();
-    cdc_rx_motor_version_s& get_version();
+    cdc_rx_motor_version_s* get_version();
     void set_version(cdc_rx_motor_version_s &v);
     void print_version();
     void set_type(motor_type t);

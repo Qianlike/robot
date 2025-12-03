@@ -672,9 +672,9 @@ void motor::set_version(cdc_rx_motor_version_s &v)
 }
 
 
-cdc_rx_motor_version_s& motor::get_version()
+cdc_rx_motor_version_s* motor::get_version()
 {
-    return version;
+    return &version;
 }
 
 

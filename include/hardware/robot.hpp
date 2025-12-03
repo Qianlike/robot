@@ -49,23 +49,22 @@ namespace hightorque_robot
 
     private:
         void init_robot(const std::string& config_path);
-        
+        int serial_pid_vid(const char *name, int *pid, int *vid);
+        int serial_pid_vid(const char *name);
+        std::vector<std::string> list_serial_ports(const std::string& full_prefix);
+        void init_ser();        
+        void check_error();
+        int check_serial_dev_exist(int);        
+        void set_port_motor_num();
     public:
 
         void publishJointStates();
         void detect_motor_limit();
-        void motor_send_cmd();
-        int serial_pid_vid(const char *name, int *pid, int *vid);
-        int serial_pid_vid(const char *name);
-        std::vector<std::string> list_serial_ports(const std::string& full_prefix);
-        void init_ser();
-        void check_error();
-        int check_serial_dev_exist(int);
-        void set_port_motor_num();
+        void motor_send_cmd();       
         void send_get_motor_state_cmd();
         void send_get_motor_version_cmd();
-        void chevk_motor_connection_position();
-        void chevk_motor_connection_version();
+        void check_motor_connection_position();
+        void check_motor_connection_version();
         void set_stop();
         void set_reset();
         void set_reset_zero();
@@ -80,7 +79,7 @@ namespace hightorque_robot
         void canboard_fdcan_reset();
         void get_motor_tqe_adjs_flag();
         void send_get_tqe_adjust_flag_cmd();
-        void chevk_tqe_adjust_flag();
+        void check_tqe_adjust_flag();
     };
 }
 #endif
