@@ -49,6 +49,7 @@ struct RobotParams
     int CANboard_num;
     bool board_special_flag;
     bool canport_error_output_flag;
+    bool exit_motor_brake_flag;
     std::map<std::string, CANBoardParams, MotorNameComparator> CANboards;
 };
 

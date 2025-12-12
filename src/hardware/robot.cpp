@@ -108,11 +108,21 @@ namespace hightorque_robot
 
     robot::~robot()
     {
-        // publish_joint_state=0;
-        set_stop();
-        set_stop();
-        set_reset();
-        printf("motor stop\n");
+        if (robot_params.exit_motor_brake_flag)
+        {
+            set_brake();
+            set_brake();
+            set_brake();
+            printf("motor brake\n");
+        }
+        else
+        {
+            set_stop();
+            set_stop();
+            set_reset();
+            printf("motor stop\n");
+        }
+
 
         for (serial_driver *s : ser)
         {
@@ -854,6 +864,14 @@ namespace hightorque_robot
         }
     }
 
+    void robot::set_brake()
+    {
+        for (canboard &cb : CANboards)
+        {
+            cb.set_brake();
+        }
+        motor_send_cmd();
+    }
 
     void robot::set_stop()
     {

@@ -163,6 +163,22 @@ int canport::set_reset_zero(int id)
 }
 
 
+void canport::set_brake()
+{
+    if (cdc_tr_message.head.s.cmd != MODE_BRAKE)
+    {
+        cdc_tr_message.head.s.head = 0XF7;
+        cdc_tr_message.head.s.cmd = MODE_BRAKE;
+        cdc_tr_message.head.s.len = 1;
+        memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
+    }
+    cdc_tr_message.data.data[0] = 0x7f;
+    motor_send_cmd();
+    motor_send_cmd();
+    motor_send_cmd();
+}
+
+
 void canport::set_stop()
 {
     if (cdc_tr_message.head.s.cmd != MODE_STOP)
@@ -173,6 +189,8 @@ void canport::set_stop()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
+    motor_send_cmd();
+    motor_send_cmd();
     motor_send_cmd();
 }
 

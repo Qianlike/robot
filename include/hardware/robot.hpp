@@ -19,7 +19,7 @@ namespace hightorque_robot
         int CANboard_num, Seial_baudrate;
         std::vector<canboard> CANboards;
         std::vector<std::string> str;
-        std::string SDK_version2 = "4.5.5"; // SDK版本
+        std::string SDK_version2 = "4.6.0"; // SDK版本
         std::condition_variable error_check_cv;
         std::mutex error_check_mutex;
         bool error_check_flag = false;
@@ -65,6 +65,7 @@ namespace hightorque_robot
         void send_get_motor_version_cmd();
         void check_motor_connection_position();
         void check_motor_connection_version();
+        void set_brake();
         void set_stop();
         void set_reset();
         void set_reset_zero();

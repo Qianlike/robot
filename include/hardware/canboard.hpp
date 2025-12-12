@@ -20,6 +20,7 @@ public:
     int get_CANport_num();
     void push_CANport(std::vector<canport*> *_CANport);
     void motor_send_cmd();
+    void set_brake();
     void set_stop();
     void set_reset();
     uint16_t set_port_motor_num();

@@ -41,6 +41,15 @@ void canboard::motor_send_cmd()
 }
 
 
+void canboard::set_brake()
+{
+    for (canport *c : CANport)
+    {
+        c->set_brake();
+    }
+}
+
+
 void canboard::set_stop()
 {
     for (canport *c : CANport)

@@ -128,6 +128,7 @@ RobotParams parseRobotParams(const std::string &filePath)
         readConfigParam(robotNode, "CANboard_num", params.CANboard_num);
         readConfigParam(robotNode, "canport_error_output_flag", params.canport_error_output_flag, false);
         readConfigParam(robotNode, "board_special_flag", params.board_special_flag, false);
+        readConfigParam(robotNode, "exit_motor_brake_flag", params.exit_motor_brake_flag, false);
 
         if (robotNode["CANboard"])
         {

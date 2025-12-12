@@ -36,6 +36,7 @@ public:
     uint16_t set_motor_num();
     int set_reset_zero();
     int set_reset_zero(int id);
+    void set_brake();
     void set_stop();
     void set_motor_runzero();
     void set_reset();
