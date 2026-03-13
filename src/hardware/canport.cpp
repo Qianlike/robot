@@ -54,7 +54,7 @@ uint16_t canport::set_motor_num()
     cdc_tr_message.data.data[0] = motor_num;
     
     int t = 0;
-    #define MAX_DALAY 1000  // 单位ms
+    #define MAX_DALAY 100  // 单位ms
     while (t++ < MAX_DALAY)
     {
         motor_send_cmd();
@@ -93,13 +93,13 @@ int canport::set_reset_zero()
 
     int t = 0;
     int num = 0;
-    int max_delay = 10000;
+    int max_delay = 50;
     motors_id.clear();
     mode_flag = 0;
     while (t++ < max_delay)
     {
         motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         num = 0;
         if (mode_flag == MODE_RESET_ZERO)
         {
@@ -146,13 +146,13 @@ int canport::set_reset_zero(int id)
     cdc_tr_message.data.data[0] = id;
 
     int t = 0;
-    int max_delay = 10000;
+    int max_delay = 50;
     motors_id.clear();
     mode_flag = 0;
     while (t++ < max_delay)
     {
         motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         if (mode_flag == MODE_RESET_ZERO && motors_id.count(id) == 1)
         {
             return 0;
@@ -220,6 +220,8 @@ void canport::send_get_tqe_adjust_flag_cmd()
     cdc_tr_message.data.data[0] = 0x7f;
 
     motor_send_cmd();
+    motor_send_cmd();
+    motor_send_cmd();
 }
 
 
@@ -237,13 +239,13 @@ void canport::set_conf_write()
 
     int t = 0;
     int num = 0;
-    int max_delay = 10000;
+    int max_delay = 50;
     motors_id.clear();
     mode_flag = 0;
     while (t++ < max_delay)
     {
         motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         num = 0;
         if (mode_flag == MODE_CONF_WRITE)
         {
@@ -288,13 +290,13 @@ int canport::set_conf_write(int id)
     cdc_tr_message.data.data[0] = id;
 
     int t = 0;
-    int max_delay = 10000;
+    int max_delay = 50;
     motors_id.clear();
     mode_flag = 0;
     while (t++ < max_delay)
     {
         motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         if (mode_flag == MODE_CONF_WRITE && motors_id.count(id) == 1)
         {
             return 0;
@@ -367,7 +369,7 @@ void canport::set_fun_v(fun_version v, uint16_t motor_version)
     *(uint16_t *)&cdc_tr_message.data.data[1] = motor_version;
 
     int t = 0;
-    #define MAX_DALAY 1000  // 单位ms
+    #define MAX_DALAY 100  // 单位ms
     while (t++ < MAX_DALAY)
     {
         motor_send_cmd();

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.6.0)
 project(hightorque_robot)
 
 if(NOT CMAKE_INSTALL_PREFIX)

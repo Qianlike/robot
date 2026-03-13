@@ -1,6 +1,6 @@
 #include "motor.hpp"
 #include <iostream>
-
+#include <algorithm>
 
 
 
