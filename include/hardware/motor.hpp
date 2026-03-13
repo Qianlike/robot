@@ -11,73 +11,84 @@
 #define MEM_INDEX_ID(id) ((id) - 1)    
 
 
-enum motor_type  // 注释掉的暂无力矩修正系数
+enum motor_type 
 {
     null = 0,
+
+    /* 旧名称 */
     m3536_32,
     m4538_19,
     m5046_20,
     m5047_09,
-    // m5047_19,
-    // m5047_20,
-    // m5047_30,
     m5047_36,
-    // m4438_08,
-    // m4438_16,
+    m5047_36_2,
     m4438_30,
     m4438_32,
-    // m7136_07,
-    // m7233_08,
-    // m6056_08,
     m6056_36,
-    // m3536_32,
     m5043_20,
-    // m5043_35,
     m7256_35,
-    // m6057_36,
     m60sg_35,
     m60bm_35,
 
-    m5047_36_2,
+    /* 新名称 */
+    m3508_02,
+    m3516_02,
+    m3532_02,
+    m4530_02,
+    m5009_02,
+    m5036_02,
+    m6036_02,
+    m7033_04,
+    m7535_02,
+    m3532_02_8353,
+    m4530_02_8353,
+    m5036_02_8353,
 
-    mGeneral, 
-    mNone,  // 力矩已在电机内部修正
+    mGeneral,  
+    mNone,
 };
 
 
-const std::unordered_map<std::string, motor_type> motor_type2 =  // 注释掉的暂无力矩修正系数
+const std::unordered_map<std::string, motor_type> motor_type2 = 
 {
     {"NULL", motor_type::null},
+
+    /* 旧名称 */
     {"3536_32", motor_type::m3536_32},
     {"4538_19", motor_type::m4538_19},
     {"5046_20", motor_type::m5046_20},
     {"5047_9", motor_type::m5047_09},
-    // {"5047_19", motor_type::m5047_19},
-    // {"5047_20", motor_type::m5047_20},
-    // {"5047_30", motor_type::m5047_30},
-    {"5047_36", motor_type::m5047_36},    // 老款5047_36力矩系数，
-    // {"4438_8", motor_type::m4438_08},
-    // {"4438_16", motor_type::m4438_16},
+    {"5047_36", motor_type::m5047_36},    
+    {"5047_36_2", motor_type::m5047_36_2},
     {"4438_30", motor_type::m4438_30},
     {"4438_32", motor_type::m4438_32},
-    // {"7136_7", motor_type::m7136_07},
-    // {"7233_8", motor_type::m7233_08},
-    // {"6056_8", motor_type::m6056_08},
     {"6056_36", motor_type::m6056_36},
-    // {"3536_32", motor_type::m3536_32},
-    {"5043_20", motor_type::m5043_20},
-    // {"5043_35", motor_type::m5043_35},
-    {"7256_35", motor_type::m7256_35},
-    // {"6057_36", motor_type::m6057_36},
+    {"5043_20", motor_type::m5043_20}, 
+    {"7256_35", motor_type::m7256_35},   
     {"60SG_35", motor_type::m60sg_35},
-    {"60BM_35", motor_type::m60bm_35},
-    {"5047_36_2", motor_type::m5047_36_2},  // 新版5047_36（目前的电机都是新款）的力矩系数，建议新算法的5047_36电机都采用此系数
+    {"60BM_35", motor_type::m60bm_35},  
+
+    /* 新名称 */
+    {"3508_02", motor_type::m3508_02},
+    {"3516_02", motor_type::m3516_02},
+    {"3532_02", motor_type::m3532_02},
+    {"4530_02", motor_type::m4530_02},
+    {"5009_02", motor_type::m5009_02},
+    {"5036_02", motor_type::m5036_02},
+    {"6036_02", motor_type::m6036_02},
+    {"7033_04", motor_type::m7033_04},
+    {"7535_02", motor_type::m7535_02},
+    {"3532_02_8353", motor_type::m3532_02_8353},
+    {"4530_02_8353", motor_type::m4530_02_8353},
+    {"5036_02_8353", motor_type::m5036_02_8353},
+
     {"General", motor_type::mGeneral},  // 遇到暂无力矩修正系数的电机时临时用
     {"NONE", motor_type::mNone},        // 无修正，已在电机内部修正
 };
 
 const std::unordered_map<motor_type, float> motor_tqe_adj = 
 {
+    /* 旧名称 */
     {motor_type::m3536_32,   0.4581f},
     {motor_type::m5046_20,   0.5280f},
     {motor_type::m4538_19,   0.4450f},
@@ -87,10 +98,25 @@ const std::unordered_map<motor_type, float> motor_tqe_adj =
     {motor_type::m4438_30,   0.5256f},
     {motor_type::m4438_32,   0.5584f},
     {motor_type::m6056_36,   0.6770f},
+    {motor_type::m5043_20,   0.9660f},
     {motor_type::m7256_35,   0.6770f},
     {motor_type::m60sg_35,   0.7942f},
     {motor_type::m60bm_35,   0.7942f},
-    {motor_type::m5043_20,   0.9660f},
+
+    /* 新名称 */
+    {motor_type::m3508_02,   0.37f},
+    {motor_type::m3516_02,   0.37f},
+    {motor_type::m3532_02,   0.37f},
+    {motor_type::m4530_02,   0.62f},
+    {motor_type::m5009_02,   0.71f},
+    {motor_type::m5036_02,   0.67f},
+    {motor_type::m6036_02,   0.66f},
+    {motor_type::m7033_04,   0.84f},
+    {motor_type::m7535_02,   0.73f},
+    {motor_type::m3532_02_8353,   0.61f},
+    {motor_type::m4530_02_8353,   0.64f},
+    {motor_type::m5036_02_8353,   0.70f},
+    
     {motor_type::mGeneral,   0.5000f},
     {motor_type::mNone,      1.0000f}
 };

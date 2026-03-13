@@ -173,8 +173,7 @@ void canport::set_brake()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_cmd();
-    motor_send_cmd();
+
     motor_send_cmd();
 }
 
@@ -189,8 +188,7 @@ void canport::set_stop()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_cmd();
-    motor_send_cmd();
+
     motor_send_cmd();
 }
 
@@ -207,8 +205,6 @@ void canport::set_reset()
     cdc_tr_message.data.data[0] = 0x7f;
 
     motor_send_cmd();
-    motor_send_cmd();
-    motor_send_cmd();
 }
 
 
@@ -222,8 +218,7 @@ void canport::send_get_tqe_adjust_flag_cmd()
         memset(&cdc_tr_message.data, 0, cdc_tr_message.head.s.len);
     }
     cdc_tr_message.data.data[0] = 0x7f;
-    motor_send_cmd();
-    motor_send_cmd();
+
     motor_send_cmd();
 }
 

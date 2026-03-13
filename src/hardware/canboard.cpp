@@ -127,26 +127,20 @@ void canboard::send_get_tqe_adjust_flag_cmd()
 
 void canboard::set_reset_zero()
 {
+    set_reset();
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
     for (canport *c : CANport)
     {
-        for (int i = 0; i < 5; i++)
-        {
-            c->set_reset();
-            c->motor_send_cmd();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
         if (c->set_reset_zero() == 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(150));
             c->set_conf_write();
         }
-        c->set_reset();
-        c->motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        c->motor_send_cmd();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    set_reset();
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
 }
 
 

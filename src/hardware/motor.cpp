@@ -588,6 +588,7 @@ void motor::set_motor_type(std::string type_str)
 {
     try 
     {
+        std::replace(type_str.begin(), type_str.end(), '-', '_');
         type_ = motor_type2.at(type_str);
     } 
     catch (const std::out_of_range& e) 
