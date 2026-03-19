@@ -19,7 +19,7 @@ namespace hightorque_robot
         int CANboard_num, Seial_baudrate;
         std::vector<canboard> CANboards;
         std::vector<std::string> str;
-        std::string SDK_version2 = "4.6.1"; // SDK版本
+        std::string SDK_version2 = "4.6.2"; // SDK版本
         std::condition_variable error_check_cv;
         std::mutex error_check_mutex;
         bool error_check_flag = false;
@@ -31,6 +31,7 @@ namespace hightorque_robot
         bool lcm_en;
         bool canport_error_output_flag = false;
         bool board_special_flag = false;
+        std::chrono::milliseconds::rep send_time_old = 0;
     public:
         std::vector<serial_driver *> ser;
         std::vector<motor *> Motors;
