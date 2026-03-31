@@ -31,7 +31,6 @@ namespace hightorque_robot
         bool lcm_en;
         bool canport_error_output_flag = false;
         bool board_special_flag = false;
-        std::chrono::milliseconds::rep send_time_old = 0;
     public:
         std::vector<serial_driver *> ser;
         std::vector<motor *> Motors;

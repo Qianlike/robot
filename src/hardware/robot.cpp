@@ -255,17 +255,6 @@ namespace hightorque_robot
     {
         if(!motor_position_limit_flag && !motor_torque_limit_flag)
         {
-            auto now = std::chrono::system_clock::now();
-            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-
-            if (time - send_time_old < 1)
-            {
-                ROS_ERROR("The transmission interval must be greater than or equal to 1 ms.");
-                exit(1);
-            }
-            send_time_old = time;
-            
-
             for (canboard &cb : CANboards)
             {
                 cb.motor_send_cmd();
