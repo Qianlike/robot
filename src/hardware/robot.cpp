@@ -382,7 +382,15 @@ namespace hightorque_robot
 
         closedir(directory);
 
-        std::reverse(serial_ports.begin(), serial_ports.end());
+        std::sort(serial_ports.begin(), serial_ports.end(),
+            [](const std::string& a, const std::string& b) 
+            {
+                auto get_num = [](const std::string& s) 
+                {
+                    return std::stoi(s.substr(s.find_last_not_of("0123456789") + 1));
+                };
+                return get_num(a) < get_num(b);
+            });
 
         return serial_ports;
     }
