@@ -22,7 +22,8 @@ int main()
 
     while (!exitFlag.load())
     {
-        port1.velocity(1, 0);
+        port1.velocity(1, 0.314);
+        port1.velocity(2, 0.314);
         port1.send();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }

@@ -90,7 +90,7 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     comm_init();
     set_cache_num(id_list.size());
 
-    printf("\n");
+    PRINT_INFO_G("canport%d init ok\n", canport_id);
 }
 
 canport::~canport()
@@ -334,7 +334,7 @@ uint16_t canport::get_data_len(uint8_t mode, uint16_t num)
         rem_len = fdcan_one_len;
     }
 
-    return mul * fdcan_one_len + rem_len;
+    return mul * fdcan_one_len + rem_len + 2;
 }
 
 
@@ -345,7 +345,10 @@ void canport::motor_tdata_clean(uint8_t cmd)
         prot_tdata.head.s.head = PROT_HEAD;
         prot_tdata.head.s.cmd = cmd;
         prot_tdata.head.s.len = get_data_len(cmd, id_max);
-
+        for (int i = 0; i < id_max; i++)
+        {
+            prot_tdata.data.contr.raw16[i] = 0x8000;
+        }
         prot_tdata.data.contr.data_type = TINT16_NOHDR;
         prot_tdata.data.contr.query = QUERY_MODE_FAULT_POS_VEL_TQE;
     }
