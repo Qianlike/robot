@@ -1,0 +1,16 @@
+robot:
+  robot_name: "Single_Motor"
+  canport_num: 1
+  canport:
+    canport_1:
+      canport_id: 1
+      motor_num: 1
+      motor:
+        motor_1:
+          id: 1
+          name: "L_low_foot"
+      
+
+
+
+

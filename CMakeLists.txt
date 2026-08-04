@@ -1,47 +1,52 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(hightorque_robot)
+cmake_minimum_required(VERSION 3.14)
+project(hightorque_fdcan)
 
-# Find catkin
-find_package(serial REQUIRED)
-find_package(lcm REQUIRED)
-find_package(yaml-cpp REQUIRED)
+# ==================== 基础设置 ====================
+# set(CMAKE_CXX_STANDARD 17)
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(rt_LIBRARIES rt)
-set(pthread_LIBRARIES pthread)
-set(serial_SRCS
-    src/serial_driver.cpp
+# 生成 compile_commands.json（方便 IDE / clangd）
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# ==================== 禁用 yaml-cpp 多余功能 ====================
+# 加快编译，避免生成测试和工具
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "Disable yaml-cpp tools" FORCE)
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "Disable yaml-cpp contrib" FORCE)
+# 推荐使用静态库（嵌入方便，避免运行时找不到 .so）
+set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "Build yaml-cpp as static library" FORCE)
+
+# ==================== 添加子目录 ====================
+add_subdirectory(lib/serial)
+add_subdirectory(lib/yaml-cpp)
+
+# ==================== 源文件 ====================
+set(SOURCE_FILES
+    src/robot.cpp
+    src/canport.cpp
+    # src/motor.cpp
+    src/crc.cpp
+    src/convert.cpp
     src/parse_robot_params.cpp
-    src/hardware/motor.cpp
-    src/hardware/canport.cpp
-    src/hardware/canboard.cpp
-    src/hardware/robot.cpp
-    src/crc/crc8.cpp
-    src/crc/crc16.cpp
 )
 
-find_library(SERIALPORT_LIBRARY serialport)
-
-if(NOT SERIALPORT_LIBRARY)
-  message(FATAL_ERROR "libserialport not found")
-endif()
-
-include_directories(
-  include
-  include/crc
-  include/hardware
-  msg/motor_msg
+# ==================== 可执行文件 ====================
+add_executable(demo
+    ${SOURCE_FILES}
+    example/demo.cpp
 )
 
-add_library(hightorque_robot SHARED ${serial_SRCS})
-target_link_libraries(hightorque_robot rt pthread ${SERIALPORT_LIBRARY} serial lcm yaml-cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/msg)
 
-add_executable(parse_demo example/parse_demo.cpp)
-target_link_libraries(parse_demo hightorque_robot)
+target_include_directories(demo PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include
+)
 
-add_executable(motor_run example/motor_run.cpp)
-target_link_libraries(motor_run hightorque_robot)
-
-add_executable(motor_msg_subscriber example/motor_msg_subscriber.cpp)
-target_link_libraries(motor_msg_subscriber hightorque_robot)
+find_package(Threads REQUIRED)
+target_link_libraries(demo PRIVATE
+    serial
+    yaml-cpp
+    Threads::Threads
+)
 

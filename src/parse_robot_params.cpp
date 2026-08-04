@@ -1,65 +1,194 @@
-#include <iostream>
-#include "parse_robot_params.hpp"
+#include "parse_robot_params.h"
+#include <yaml-cpp/yaml.h>
 
-RobotParams parseRobotParams(const std::string& filePath) {
+#include <sstream>
+#include <cstdlib>
+#include <string>
+
+namespace
+{
+std::string formatMark(const YAML::Mark &mark)
+{
+    if (mark.line < 0)
+    {
+        return "unknown location";
+    }
+
+    std::ostringstream oss;
+    oss << "line " << (mark.line + 1)
+        << ", column " << (mark.column + 1);
+    return oss.str();
+}
+
+std::string makeFullKey(const std::string &path, const std::string &key)
+{
+    if (path.empty())
+    {
+        return key;
+    }
+    return path + "." + key;
+}
+
+std::string nodeToString(const YAML::Node &node)
+{
+    std::ostringstream oss;
+    oss << node;
+    return oss.str();
+}
+
+template <typename T>
+void readConfigParam(const YAML::Node &node,
+                     const std::string &key,
+                     T &value,
+                     const std::string &path = "")
+{
+    const std::string full_key = makeFullKey(path, key);
+    const YAML::Node value_node = node[key];
+
+    if (value_node)
+    {
+        try
+        {
+            value = value_node.as<T>();
+        }
+        catch (const YAML::BadConversion &e)
+        {
+            PRINT_ERROR("Error: Failed to convert '%s' to the required type at %s. %s",
+                        full_key.c_str(),
+                        formatMark(e.mark).c_str(),
+                        e.what());
+            std::exit(-1);
+        }
+        catch (const YAML::Exception &e)
+        {
+            PRINT_ERROR("Error: YAML exception on '%s' at %s. %s",
+                        full_key.c_str(),
+                        formatMark(e.mark).c_str(),
+                        e.what());
+            std::exit(-1);
+        }
+    }
+    else
+    {
+        PRINT_ERROR("Error: '%s' is missing in configuration (near %s).",
+                    full_key.c_str(),
+                    formatMark(node.Mark()).c_str());
+        std::exit(-1);
+    }
+}
+
+template <typename T>
+void readConfigParamOptional(const YAML::Node &node,
+                             const std::string &key,
+                             T &value,
+                             const T &default_value,
+                             const std::string &path = "")
+{
+    const std::string full_key = makeFullKey(path, key);
+    const YAML::Node value_node = node[key];
+
+    if (value_node)
+    {
+        try
+        {
+            value = value_node.as<T>();
+        }
+        catch (const YAML::BadConversion &e)
+        {
+            PRINT_ERROR("Error: Failed to convert '%s' to the required type at %s. %s",
+                        full_key.c_str(),
+                        formatMark(e.mark).c_str(),
+                        e.what());
+            std::exit(-1);
+        }
+        catch (const YAML::Exception &e)
+        {
+            PRINT_ERROR("Error: YAML exception on '%s' at %s. %s",
+                        full_key.c_str(),
+                        formatMark(e.mark).c_str(),
+                        e.what());
+            std::exit(-1);
+        }
+    }
+    else
+    {
+        value = default_value;
+    }
+}
+} // namespace
+
+RobotParams parse_robot_params()
+{
+    auto param_file =
+        YAML::LoadFile("../robot_param/robot_config.yaml")["param_file"].as<std::string>();
+    PRINT_INFO("patam_file: %s", param_file.c_str());
+
+    auto config = YAML::LoadFile(param_file.c_str());
     RobotParams params;
-    YAML::Node config = YAML::LoadFile(filePath);
 
-    if (config["robot"]) {
-        YAML::Node robotNode = config["robot"];
-        params.SDK_version = robotNode["SDK_version"].as<int>();
-        params.robot_name = robotNode["robot_name"].as<std::string>();
-        params.arm_dof = robotNode["arm_dof"].as<int>();
-        params.leg_dof = robotNode["leg_dof"].as<int>();
-        params.Serial_Type = robotNode["Serial_Type"].as<std::string>();
-        params.Seial_baudrate = robotNode["Seial_baudrate"].as<int>();
-        params.CAN_Type = robotNode["CAN_Type"].as<std::string>();
-        params.control_type = robotNode["control_type"].as<int>();
-        params.CANboard_type = robotNode["CANboard_type"].as<std::string>();
-        params.CANboard_num = robotNode["CANboard_num"].as<int>();
+    // YAML::Node 不能直接给 printf，先转成 string
+    PRINT_INFO("%s", nodeToString(config).c_str());
 
-        if (robotNode["CANboard"]) {
-            YAML::Node CANboardNode = robotNode["CANboard"];
-            for (YAML::const_iterator it = CANboardNode.begin(); it != CANboardNode.end(); ++it) {
-                std::string boardName = it->first.as<std::string>();
-                YAML::Node boardNode = it->second;
-                CANBoardParams board;
-                board.CANport_num = boardNode["CANport_num"].as<int>();
+    if (config["robot"])
+    {
+        YAML::Node robot_node = config["robot"];
+        const std::string robot_path = "robot";
 
-                if (boardNode["CANport"]) {
-                    YAML::Node CANportNode = boardNode["CANport"];
-                    for (YAML::const_iterator portIt = CANportNode.begin(); portIt != CANportNode.end(); ++portIt) {
-                        std::string portName = portIt->first.as<std::string>();
-                        YAML::Node portNode = portIt->second;
-                        CANPortParams port;
-                        port.serial_id = portNode["serial_id"].as<int>();
-                        port.motor_num = portNode["motor_num"].as<int>();
+        readConfigParam(robot_node, "robot_name", params.robot_name, robot_path);
+        readConfigParam(robot_node, "canport_num", params.canport_num, robot_path);
 
-                        if (portNode["motor"]) {
-                            YAML::Node motorNode = portNode["motor"];
-                            for (YAML::const_iterator motorIt = motorNode.begin(); motorIt != motorNode.end(); ++motorIt) {
-                                std::string motorName = motorIt->first.as<std::string>();
-                                YAML::Node motorData = motorIt->second;
-                                MotorParams motor;
-                                motor.type = motorData["type"].as<std::string>();
-                                motor.id = motorData["id"].as<int>();
-                                motor.name = motorData["name"].as<std::string>();
-                                motor.num = motorData["num"].as<int>();
-                                motor.pos_limit_enable = motorData["pos_limit_enable"].as<bool>();
-                                motor.pos_upper = motorData["pos_upper"].as<double>();
-                                motor.pos_lower = motorData["pos_lower"].as<double>();
-                                motor.tor_limit_enable = motorData["tor_limit_enable"].as<bool>();
-                                motor.tor_upper = motorData["tor_upper"].as<double>();
-                                motor.tor_lower = motorData["tor_lower"].as<double>();
-                                port.motors[motorName] = motor;
-                            }
-                        }
-                        board.CANports[portName] = port;
+        if (robot_node["canport"])
+        {
+            YAML::Node canport_node = robot_node["canport"];
+            int port_num = 0;
+
+            for (YAML::const_iterator it = canport_node.begin();
+                 it != canport_node.end() && port_num < params.canport_num;
+                 ++it, ++port_num)
+            {
+                std::string port_name = it->first.as<std::string>();
+                YAML::Node port_node = it->second;
+
+                const std::string port_path = robot_path + ".canport." + port_name;
+
+                CANPortParams port;
+                readConfigParam(port_node, "canport_id", port.canport_id, port_path);
+                readConfigParam(port_node, "motor_num", port.motor_num, port_path);
+
+                if (port_node["motor"])
+                {
+                    YAML::Node motor_node = port_node["motor"];
+                    int motor_idx = 0;
+
+                    for (YAML::const_iterator motor_it = motor_node.begin();
+                         motor_it != motor_node.end() && motor_idx < port.motor_num;
+                         ++motor_it, ++motor_idx)
+                    {
+                        std::string motor_key = motor_it->first.as<std::string>();
+                        YAML::Node motor_data = motor_it->second;
+
+                        const std::string motor_path = port_path + ".motor." + motor_key;
+
+                        MotorParams motor;
+                        readConfigParam(motor_data, "id", motor.id, motor_path);
+                        readConfigParam(motor_data, "name", motor.name, motor_path);
+
+                        port.motors.push_back(motor);
                     }
                 }
-                params.CANboards[boardName] = board;
+
+                params.canports.push_back(port);
             }
         }
+
+        PRINT_INFO_G("Load robot params success: robot_name=%s, canport_num=%d",
+                     params.robot_name.c_str(),
+                     params.canport_num);
+    }
+    else
+    {
+        PRINT_ERROR("Error: 'robot' is missing in configuration file.");
+        std::exit(-1);
     }
 
     return params;

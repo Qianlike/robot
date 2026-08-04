@@ -1,0 +1,452 @@
+robot:
+  robot_name: "Multi_Motor"
+  canport_num: 7
+  canport:
+    canport_1:
+      canport_id: 1
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M1_1"
+        motor_2:
+          id: 2
+          name: "M1_2"
+        motor_3:
+          id: 3
+          name: "M1_3"
+        motor_4:
+          id: 4
+          name: "M1_4"
+        motor_5:
+          id: 5
+          name: "M1_5"
+        motor_6:
+          id: 6
+          name: "M1_6"
+        motor_7:
+          id: 7
+          name: "M1_7"
+        motor_8:
+          id: 8
+          name: "M1_8"
+        motor_9:
+          id: 9
+          name: "M1_9"
+        motor_10:
+          id: 10
+          name: "M1_10"
+        motor_11:
+          id: 11
+          name: "M1_11"
+        motor_12:
+          id: 12
+          name: "M1_12"
+        motor_13:
+          id: 13
+          name: "M1_13"
+        motor_14:
+          id: 14
+          name: "M1_14"
+        motor_15:
+          id: 15
+          name: "M1_15"
+        motor_16:
+          id: 16
+          name: "M1_16"
+        motor_17:
+          id: 17
+          name: "M1_17"
+        motor_18:
+          id: 18
+          name: "M1_18"
+        motor_19:
+          id: 19
+          name: "M1_19"
+        motor_20:
+          id: 20
+          name: "M1_20"
+    canport_2:
+      canport_id: 2
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M2_1"
+        motor_2:
+          id: 2
+          name: "M2_2"
+        motor_3:
+          id: 3
+          name: "M2_3"
+        motor_4:
+          id: 4
+          name: "M2_4"
+        motor_5:
+          id: 5
+          name: "M2_5"
+        motor_6:
+          id: 6
+          name: "M2_6"
+        motor_7:
+          id: 7
+          name: "M2_7"
+        motor_8:
+          id: 8
+          name: "M2_8"
+        motor_9:
+          id: 9
+          name: "M2_9"
+        motor_10:
+          id: 10
+          name: "M2_10"
+        motor_11:
+          id: 11
+          name: "M2_11"
+        motor_12:
+          id: 12
+          name: "M2_12"
+        motor_13:
+          id: 13
+          name: "M2_13"
+        motor_14:
+          id: 14
+          name: "M2_14"
+        motor_15:
+          id: 15
+          name: "M2_15"
+        motor_16:
+          id: 16
+          name: "M2_16"
+        motor_17:
+          id: 17
+          name: "M2_17"
+        motor_18:
+          id: 18
+          name: "M2_18"
+        motor_19:
+          id: 19
+          name: "M2_19"
+        motor_20:
+          id: 20
+          name: "M2_20"
+    canport_3:
+      canport_id: 3
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M3_1"
+        motor_2:
+          id: 2
+          name: "M3_2"
+        motor_3:
+          id: 3
+          name: "M3_3"
+        motor_4:
+          id: 4
+          name: "M3_4"
+        motor_5:
+          id: 5
+          name: "M3_5"
+        motor_6:
+          id: 6
+          name: "M3_6"
+        motor_7:
+          id: 7
+          name: "M3_7"
+        motor_8:
+          id: 8
+          name: "M3_8"
+        motor_9:
+          id: 9
+          name: "M3_9"
+        motor_10:
+          id: 10
+          name: "M3_10"
+        motor_11:
+          id: 11
+          name: "M3_11"
+        motor_12:
+          id: 12
+          name: "M3_12"
+        motor_13:
+          id: 13
+          name: "M3_13"
+        motor_14:
+          id: 14
+          name: "M3_14"
+        motor_15:
+          id: 15
+          name: "M3_15"
+        motor_16:
+          id: 16
+          name: "M3_16"
+        motor_17:
+          id: 17
+          name: "M3_17"
+        motor_18:
+          id: 18
+          name: "M3_18"
+        motor_19:
+          id: 19
+          name: "M3_19"
+        motor_20:
+          id: 20
+          name: "M3_20"
+    canport_4:
+      canport_id: 4
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M4_1"
+        motor_2:
+          id: 2
+          name: "M4_2"
+        motor_3:
+          id: 3
+          name: "M4_3"
+        motor_4:
+          id: 4
+          name: "M4_4"
+        motor_5:
+          id: 5
+          name: "M4_5"
+        motor_6:
+          id: 6
+          name: "M4_6"
+        motor_7:
+          id: 7
+          name: "M4_7"
+        motor_8:
+          id: 8
+          name: "M4_8"
+        motor_9:
+          id: 9
+          name: "M4_9"
+        motor_10:
+          id: 10
+          name: "M4_10"
+        motor_11:
+          id: 11
+          name: "M4_11"
+        motor_12:
+          id: 12
+          name: "M4_12"
+        motor_13:
+          id: 13
+          name: "M4_13"
+        motor_14:
+          id: 14
+          name: "M4_14"
+        motor_15:
+          id: 15
+          name: "M4_15"
+        motor_16:
+          id: 16
+          name: "M4_16"
+        motor_17:
+          id: 17
+          name: "M4_17"
+        motor_18:
+          id: 18
+          name: "M4_18"
+        motor_19:
+          id: 19
+          name: "M4_19"
+        motor_20:
+          id: 20
+          name: "M4_20"
+    canport_5:
+      canport_id: 5
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M5_1"
+        motor_2:
+          id: 2
+          name: "M5_2"
+        motor_3:
+          id: 3
+          name: "M5_3"
+        motor_4:
+          id: 4
+          name: "M5_4"
+        motor_5:
+          id: 5
+          name: "M5_5"
+        motor_6:
+          id: 6
+          name: "M5_6"
+        motor_7:
+          id: 7
+          name: "M5_7"
+        motor_8:
+          id: 8
+          name: "M5_8"
+        motor_9:
+          id: 9
+          name: "M5_9"
+        motor_10:
+          id: 10
+          name: "M5_10"
+        motor_11:
+          id: 11
+          name: "M5_11"
+        motor_12:
+          id: 12
+          name: "M5_12"
+        motor_13:
+          id: 13
+          name: "M5_13"
+        motor_14:
+          id: 14
+          name: "M5_14"
+        motor_15:
+          id: 15
+          name: "M5_15"
+        motor_16:
+          id: 16
+          name: "M5_16"
+        motor_17:
+          id: 17
+          name: "M5_17"
+        motor_18:
+          id: 18
+          name: "M5_18"
+        motor_19:
+          id: 19
+          name: "M5_19"
+        motor_20:
+          id: 20
+          name: "M5_20"
+    canport_6:
+      canport_id: 6
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M6_1"
+        motor_2:
+          id: 2
+          name: "M6_2"
+        motor_3:
+          id: 3
+          name: "M6_3"
+        motor_4:
+          id: 4
+          name: "M6_4"
+        motor_5:
+          id: 5
+          name: "M6_5"
+        motor_6:
+          id: 6
+          name: "M6_6"
+        motor_7:
+          id: 7
+          name: "M6_7"
+        motor_8:
+          id: 8
+          name: "M6_8"
+        motor_9:
+          id: 9
+          name: "M6_9"
+        motor_10:
+          id: 10
+          name: "M6_10"
+        motor_11:
+          id: 11
+          name: "M6_11"
+        motor_12:
+          id: 12
+          name: "M6_12"
+        motor_13:
+          id: 13
+          name: "M6_13"
+        motor_14:
+          id: 14
+          name: "M6_14"
+        motor_15:
+          id: 15
+          name: "M6_15"
+        motor_16:
+          id: 16
+          name: "M6_16"
+        motor_17:
+          id: 17
+          name: "M6_17"
+        motor_18:
+          id: 18
+          name: "M6_18"
+        motor_19:
+          id: 19
+          name: "M6_19"
+        motor_20:
+          id: 20
+          name: "M6_20"
+    canport_7:
+      canport_id: 7
+      motor_num: 20
+      motor:
+        motor_1:
+          id: 1
+          name: "M7_1"
+        motor_2:
+          id: 2
+          name: "M7_2"
+        motor_3:
+          id: 3
+          name: "M7_3"
+        motor_4:
+          id: 4
+          name: "M7_4"
+        motor_5:
+          id: 5
+          name: "M7_5"
+        motor_6:
+          id: 6
+          name: "M7_6"
+        motor_7:
+          id: 7
+          name: "M7_7"
+        motor_8:
+          id: 8
+          name: "M7_8"
+        motor_9:
+          id: 9
+          name: "M7_9"
+        motor_10:
+          id: 10
+          name: "M7_10"
+        motor_11:
+          id: 11
+          name: "M7_11"
+        motor_12:
+          id: 12
+          name: "M7_12"
+        motor_13:
+          id: 13
+          name: "M7_13"
+        motor_14:
+          id: 14
+          name: "M7_14"
+        motor_15:
+          id: 15
+          name: "M7_15"
+        motor_16:
+          id: 16
+          name: "M7_16"
+        motor_17:
+          id: 17
+          name: "M7_17"
+        motor_18:
+          id: 18
+          name: "M7_18"
+        motor_19:
+          id: 19
+          name: "M7_19"
+        motor_20:
+          id: 20
+          name: "M7_20"
