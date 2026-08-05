@@ -22,10 +22,17 @@ int main()
 
     while (!exitFlag.load())
     {
+        for (auto it : port1.map_motors_state)
+        {
+            printf("motor[%02d] pos=%.2f, vel=%.2f, tqe=%.2f\n", it.first, it.second.position, it.second.velocity, it.second.torque);
+        }
+        
+
+
         port1.velocity(1, 0.314);
         port1.velocity(2, 0.314);
         port1.send();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     return 0;

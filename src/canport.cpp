@@ -60,7 +60,7 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
         {
             id_max = id;
         }
-        id_list.push_back(id);
+        map_motors_state.insert({id, {}});
     }
 
     if (ser_list.size() == 0)
@@ -88,7 +88,7 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     }
 
     comm_init();
-    set_cache_num(id_list.size());
+    set_cache_num(map_motors_state.size());
 
     PRINT_INFO_G("canport%d init ok\n", canport_id);
 }
@@ -413,6 +413,18 @@ void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, flo
 }
 
 
+motor_state_t *canport::get_motor_state(uint8_t id)
+{
+    auto it = map_motors_state.find(id);
+    if (it == map_motors_state.end())
+    {
+        nullptr;
+    }
+
+    return &(it->second);
+}
+
+
 fdcan_state_s *canport::get_canport_state()
 {
     return &canport_state;
@@ -500,7 +512,7 @@ void canport::recv()
             }
             else if (canport_state.fault == FDCAN_STATUS_ERROR_WARNING)
             {
-                PRINT_INFO("\033[1;32mcanport[%d] flaut = %d, rx = %d, tx = %d\033[0m", canport_id, canport_state.fault, canport_state.rx_err_num, canport_state.tx_err_num);
+                PRINT_INFO("canport[%d] flaut = %d, rx = %d, tx = %d", canport_id, canport_state.fault, canport_state.rx_err_num, canport_state.tx_err_num);
             }
 
             switch (prot_rdata.head.s.cmd)
@@ -516,13 +528,35 @@ void canport::recv()
             case MODE_CACHE_NUM:
                 set_cache_num_flag = prot_rdata.data.s.raw[0];
                 break;
+            case MODE_MOTOR_STATE:
+                switch (prot_rdata.data.s.motor_state.query)
+                {
+                case QUERY_MODE_FAULT_POS_VEL_TQE:
+                    const uint8_t index_max = (prot_rdata.head.s.len - 1) / sizeof(query_mode_fault_pos_vel_tqe_t);
+                    for (int i = 0; i < index_max; i++)
+                    {
+                        auto it = map_motors_state.find(prot_rdata.data.s.motor_state.mfpvt[i].id);
+                        if (it != map_motors_state.end())
+                        {
+                            it->second.mode = prot_rdata.data.s.motor_state.mfpvt[i].mode;
+                            it->second.fault = prot_rdata.data.s.motor_state.mfpvt[i].fault;
+
+                            it->second.position = pos_int2float(prot_rdata.data.s.motor_state.mfpvt[i].pos);
+                            it->second.velocity = vel_int2float(prot_rdata.data.s.motor_state.mfpvt[i].vel);
+                            it->second.torque = tqe_int2float(prot_rdata.data.s.motor_state.mfpvt[i].tqe);
+                            it->second.num++;
+                            it->second.time = std::chrono::steady_clock::now();
+                        }
+                    }
+                    break;
+                }
+                break;
             default:
                 break;
             }
         }
         catch(const std::exception& e)
         {
-            // std::cerr << "\033[1;31m" << e.what() << "\033[0m" << '\n';
             ser_dev.close();
         }
     }

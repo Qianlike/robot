@@ -180,6 +180,27 @@ typedef struct
 } contr_pos_vel_tqe_kp_kd_t;
 
 
+typedef struct 
+{
+    uint8_t id;
+    uint8_t mode;
+    uint8_t fault;
+    int16_t pos;
+    int16_t vel;
+    int16_t tqe;
+} query_mode_fault_pos_vel_tqe_t;
+
+
+typedef struct 
+{
+    uint8_t query;
+    union
+    {
+        query_mode_fault_pos_vel_tqe_t mfpvt[30];
+    };
+} port_motor_state_t;
+
+
 
 
 typedef struct 
@@ -216,6 +237,7 @@ typedef struct
             {
                 fdcan_msg_s fdcan_msg;
                 version_s version;
+                port_motor_state_t motor_state;
                 uint8_t raw[PROT_DATA_LEN - sizeof(fdcan_state_s)];
             };
         } s;
@@ -237,22 +259,6 @@ typedef struct
 } prot_cdc2comm_s;
 
 #pragma pack()
-
-
-typedef struct 
-{
-    uint8_t id;
-    std::string name;
-    uint8_t mode;
-    uint8_t fault;
-
-    float position;
-    float velocity;
-    float torque;
-
-    uint32_t num;
-    double time;
-} motor_state_t;
 
 
 #endif

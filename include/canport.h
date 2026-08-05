@@ -3,15 +3,36 @@
 #include "serial/serial.h"
 #include "common_macros.h"
 #include "parse_robot_params.h"
+#include "version.h"
+
 #include <iostream>
 #include <vector>
 #include <thread>
-#include "version.h"
+#include <map>
+
+
+
+typedef struct 
+{
+    std::string name;
+    uint8_t mode;
+    uint8_t fault;
+
+    float position;
+    float velocity;
+    float torque;
+
+    uint32_t num;
+    std::chrono::steady_clock::time_point time;
+} motor_state_t;
 
 
 class canport
 {
 public:
+    fdcan_state_s canport_state;
+    std::map<int, motor_state_t> map_motors_state;
+
     canport(uint8_t _canport_id, std::string _ser_name, const RobotParams robot_params);
     canport(uint8_t _canport_id, std::initializer_list<int> id_list);
     ~canport();
@@ -28,6 +49,8 @@ public:
     void pos_vel_acc(uint8_t id, float pos, float vel, float acc);
     void pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe);
     void pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, float kp, float kd);
+
+    motor_state_t *get_motor_state(uint8_t id);
 
     void send(void);
     fdcan_state_s *get_canport_state(void);
@@ -46,12 +69,7 @@ private:
     prot_cdc2comm_s prot_tdata;
     serial::Serial ser_dev;
     std::thread ser_recv_thread;
-
-    fdcan_state_s canport_state;
-    // motor_state_t motor_states;
-
     int id_max = 0;
-    std::vector<int> id_list{};
 
     uint8_t comm_init_flag = 0;
     uint8_t set_cache_num_flag = 0;
