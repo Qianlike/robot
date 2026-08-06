@@ -29,6 +29,7 @@
 #define  MODE_CURRENT               0X84
 #define  MODE_STOP                  0X85
 #define  MODE_BRAKE                 0X86
+#define  MODE_RESET                 0X87
 
 #define  MODE_VEL_ACC               0X90
 #define  MODE_POS_VEL_TQE           0X92

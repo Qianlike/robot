@@ -452,6 +452,33 @@ void canport::stop()
 }
 
 
+void canport::reset(uint8_t id)
+{
+    motor_tdata_clean(MODE_RESET);
+    prot_tdata.data.contr.raw8[id - 1] = 1;
+}
+
+
+void canport::reset()
+{
+    motor_tdata_clean(MODE_RESET);
+    for (auto it : map_motors_state)
+    {
+        prot_tdata.data.contr.raw8[it.first - 1] = 1;
+    }
+}
+
+
+void canport::stop()
+{
+    motor_tdata_clean(MODE_STOP);
+    for (auto it : map_motors_state)
+    {
+        prot_tdata.data.contr.raw8[it.first - 1] = 1;
+    }
+}
+
+
 void canport::brake(uint8_t id)
 {
     motor_tdata_clean(MODE_BRAKE);
@@ -479,10 +506,8 @@ void canport::request_motor_version()
 void canport::request_motor_state()
 {
     port_tdata_clean(MODE_MOTOR_STATE, 2);
-
     prot_tdata.data.contr.data_type = TINT16_NOHDR;
     prot_tdata.data.contr.query = QUERY_MODE_FAULT_POS_VEL_TQE;
-
     send();
 }
 

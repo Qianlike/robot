@@ -59,6 +59,9 @@ public:
     void brake();
     void brake(uint8_t id);
 
+    void reset();
+    void reset(uint8_t id);
+
     void request_motor_state(void);
 
     motor_state_t *get_motor_state(uint8_t id);
