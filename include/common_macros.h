@@ -22,8 +22,8 @@
 
 
 #define  PRINT_INFO_G(format, ...)  printf(LOG_COLOR_GREEN format LOG_COLOR_RESET "\n", ##__VA_ARGS__)
-#define  PRINT_INFO(format, ...)  printf(format "\n", ##__VA_ARGS__)
-#define  PRINT_ERROR(format, ...)  printf(LOG_COLOR_RED format LOG_COLOR_RESET "\n", ##__VA_ARGS__)
+#define  PRINT_INFO(format, ...)    printf(format "\n", ##__VA_ARGS__)
+#define  PRINT_ERROR(format, ...)   printf(LOG_COLOR_RED format LOG_COLOR_RESET "\n", ##__VA_ARGS__)
 
 // // 黄色警告（可选）
 // #define PRINT_WARN(format, ...) \

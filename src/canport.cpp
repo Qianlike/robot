@@ -90,6 +90,8 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     comm_init();
     set_cache_num(map_motors_state.size());
 
+    check_motor_version();
+
     PRINT_INFO_G("canport%d init ok\n", canport_id);
 }
 
@@ -413,6 +415,51 @@ void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, flo
 }
 
 
+void canport::request_motor_version()
+{
+    port_tdata_clean(MODE_MOTOR_VERSION, 0);
+    send();
+}
+
+
+void canport::check_motor_version()
+{
+    std::vector<uint8_t> failed_id_list;
+
+    for (int i = 0; i < 100; i++)
+    {
+        request_motor_version();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        failed_id_list.clear();
+        for (auto it : map_motors_state)
+        {
+            if (it.second.fw_version.data32 == 0)
+            {
+                failed_id_list.push_back(it.first);
+            }
+        }
+
+        printf("size = %d\n", failed_id_list.size());
+        if (failed_id_list.size() == 0)
+        {
+            for (auto it : map_motors_state)
+            {
+                PRINT_INFO("canport%d motor%d version = v%d.%d.%d", canport_id, it.first, 
+                    it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
+            }
+            return;
+        }
+    }
+
+    PRINT_ERROR("canport%d error", canport_id);
+    for (auto it: failed_id_list)
+    {
+        PRINT_ERROR("canport%d motor%d", canport_id, it);
+    }
+}
+
+
 motor_state_t *canport::get_motor_state(uint8_t id)
 {
     auto it = map_motors_state.find(id);
@@ -532,8 +579,7 @@ void canport::recv()
                 switch (prot_rdata.data.s.motor_state.query)
                 {
                 case QUERY_MODE_FAULT_POS_VEL_TQE:
-                    const uint8_t index_max = (prot_rdata.head.s.len - 1) / sizeof(query_mode_fault_pos_vel_tqe_t);
-                    for (int i = 0; i < index_max; i++)
+                    for (int i = 0; i < (prot_rdata.head.s.len - 1 - 3) / sizeof(query_mode_fault_pos_vel_tqe_t); i++)
                     {
                         auto it = map_motors_state.find(prot_rdata.data.s.motor_state.mfpvt[i].id);
                         if (it != map_motors_state.end())
@@ -551,6 +597,19 @@ void canport::recv()
                     break;
                 }
                 break;
+            case MODE_MOTOR_VERSION:
+                for (int i = 0; i < (prot_rdata.head.s.len - 3) / sizeof(prot_motor_version_t); i++)
+                {
+                    auto it = map_motors_state.find(prot_rdata.data.s.motor_version[i].id);
+                    if (it != map_motors_state.end())
+                    {
+                        it->second.fw_version.major = prot_rdata.data.s.motor_version->major;
+                        it->second.fw_version.minor = prot_rdata.data.s.motor_version->minor;
+                        it->second.fw_version.patch = prot_rdata.data.s.motor_version->patch;
+                    }
+                }
+
+                break;
             default:
                 break;
             }
@@ -561,3 +620,4 @@ void canport::recv()
         }
     }
 }
+

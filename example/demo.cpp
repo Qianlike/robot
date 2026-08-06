@@ -17,8 +17,10 @@ void signalHandler(int signum)
 int main()
 {
     std::signal(SIGINT, signalHandler);
-    canport port1(1, {1, 2, 3});
-    canport port2(2, {4, 5, 6});
+    canport port1(1, {1, 2});
+    // canport port2(2, {4, 5, 6});
+
+    exit(1);
 
     while (!exitFlag.load())
     {

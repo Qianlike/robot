@@ -14,7 +14,6 @@
 
 typedef struct 
 {
-    std::string name;
     uint8_t mode;
     uint8_t fault;
 
@@ -24,6 +23,10 @@ typedef struct
 
     uint32_t num;
     std::chrono::steady_clock::time_point time;
+
+    version_s fw_version;
+    std::string model;
+    uint8_t flag;
 } motor_state_t;
 
 
@@ -83,6 +86,9 @@ private:
 
     uint16_t get_data_len(uint8_t mode, uint16_t num);
     void motor_tdata_clean(uint8_t cmd);
+
+    void request_motor_version(void);
+    void check_motor_version(void);
 
     void recv();
 };

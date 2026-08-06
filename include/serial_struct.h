@@ -19,6 +19,12 @@
 
 #define  MODE_FDCAN_PASS        10  // fdcan 透传
 #define  MODE_MOTOR_STATE       20  // 查询电机状态
+#define  MODE_MOTOR_VERSION     21  // 电机版本号
+#define  MODE_MOTOR_MODEL       22  // 电机型号
+#define  MODE_MOTOR_RESET       23  // 电机重启
+#define  MODE_MOTOR_STOP        24  // 电机停止
+#define  MODE_MOTOR_BRAKE       25  // 电机刹车
+#define  MODE_MOTOR_POS_RESET   26  // 重置电机零位
 
 
 #define  MODE_POSITION              0X80
@@ -193,6 +199,16 @@ typedef struct
 
 typedef struct 
 {
+    uint8_t id;
+    uint8_t patch;
+    uint8_t minor;
+    uint8_t major;
+} prot_motor_version_t;
+
+
+
+typedef struct 
+{
     uint8_t query;
     union
     {
@@ -238,6 +254,7 @@ typedef struct
                 fdcan_msg_s fdcan_msg;
                 version_s version;
                 port_motor_state_t motor_state;
+                prot_motor_version_t motor_version[30];
                 uint8_t raw[PROT_DATA_LEN - sizeof(fdcan_state_s)];
             };
         } s;
