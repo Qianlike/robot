@@ -469,16 +469,6 @@ void canport::reset()
 }
 
 
-void canport::stop()
-{
-    motor_tdata_clean(MODE_STOP);
-    for (auto it : map_motors_state)
-    {
-        prot_tdata.data.contr.raw8[it.first - 1] = 1;
-    }
-}
-
-
 void canport::brake(uint8_t id)
 {
     motor_tdata_clean(MODE_BRAKE);
@@ -509,6 +499,62 @@ void canport::request_motor_state()
     prot_tdata.data.contr.data_type = TINT16_NOHDR;
     prot_tdata.data.contr.query = QUERY_MODE_FAULT_POS_VEL_TQE;
     send();
+}
+
+
+void canport::request_pos_reset()
+{
+    port_tdata_clean(MODE_MOTOR_POS_RESET, id_max);
+
+    for (auto it : map_motors_state)
+    {
+        prot_tdata.data.raw[it.first - 1] = 1;
+    }
+
+    send();
+}
+
+void canport::check_motor_pos_reset()
+{
+    std::vector<uint8_t> failed_id_list;
+
+    for (auto it : map_motors_state)
+    {
+        it.second.flag = 0;
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        request_pos_reset();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        failed_id_list.clear();
+        for (auto it : map_motors_state)
+        {
+            if (it.second.flag == 0)
+            {
+                failed_id_list.push_back(it.first);
+            }
+        }
+
+        printf("size = %ld\n", failed_id_list.size());
+        if (failed_id_list.size() == 0)
+        {
+            for (auto it : map_motors_state)
+            {
+                // PRINT_INFO("canport%d motor%d version = v%d.%d.%d", canport_id, it.first, 
+                //     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
+                PRINT_INFO_G("pos resset ok");
+            }
+            return;
+        }
+    }
+
+    PRINT_ERROR("canport%d error", canport_id);
+    for (auto it: failed_id_list)
+    {
+        PRINT_ERROR("canport%d motor%d", canport_id, it);
+    }
 }
 
 
@@ -751,6 +797,16 @@ void canport::recv()
                     if (it != map_motors_state.end())
                     {
                         it->second.model = std::string(prot_rdata.data.s.motor_model[i].data, prot_rdata.data.s.motor_model[i].len);
+                    }
+                }
+                break;
+            case MODE_MOTOR_POS_RESET:
+                for (int i = 0; i < (prot_rdata.head.s.len - 3) / sizeof(prot_motor_flag_t); i++)
+                {
+                    auto it = map_motors_state.find(prot_rdata.data.s.motor_flag[i].id);
+                    if (it != map_motors_state.end())
+                    {
+                        it->second.flag = !prot_rdata.data.s.motor_flag[i].flag;
                     }
                 }
                 break;

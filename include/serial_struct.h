@@ -21,6 +21,7 @@
 #define  MODE_MOTOR_STATE       20  // 查询电机状态
 #define  MODE_MOTOR_VERSION     21  // 电机版本号
 #define  MODE_MOTOR_MODEL       22  // 电机型号
+#define  MODE_MOTOR_POS_RESET   23  // 重置电机零位
 
 #define  MODE_POSITION              0X80
 #define  MODE_VELOCITY              0X81
@@ -187,8 +188,8 @@ typedef struct
 typedef struct 
 {
     uint8_t id;
-    uint8_t mode;
     uint8_t fault;
+    uint8_t mode;
     int16_t pos;
     int16_t vel;
     int16_t tqe;
@@ -211,6 +212,12 @@ typedef struct
     char data[20];
 } prot_motor_model_t;
 
+
+typedef struct 
+{
+    uint8_t id;
+    uint8_t flag;
+} prot_motor_flag_t;
 
 
 typedef struct 
@@ -260,6 +267,7 @@ typedef struct
                 fdcan_msg_s fdcan_msg;
                 version_s version;
                 port_motor_state_t motor_state;
+                prot_motor_flag_t motor_flag[30];
                 prot_motor_version_t motor_version[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_version_t)];
                 prot_motor_model_t motor_model[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_model_t)];
                 uint8_t raw[PROT_DATA_LEN - sizeof(fdcan_state_s)];
