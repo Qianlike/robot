@@ -94,6 +94,9 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     check_motor_version();
     check_motor_model();
 
+    request_motor_state();
+    request_motor_state();
+
     PRINT_INFO_G("canport%d init ok\n", canport_id);
 }
 
@@ -420,6 +423,17 @@ void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, flo
 void canport::request_motor_version()
 {
     port_tdata_clean(MODE_MOTOR_VERSION, 0);
+    send();
+}
+
+
+void canport::request_motor_state()
+{
+    port_tdata_clean(MODE_MOTOR_STATE, 2);
+
+    prot_tdata.data.contr.data_type = TINT16_NOHDR;
+    prot_tdata.data.contr.query = QUERY_MODE_FAULT_POS_VEL_TQE;
+
     send();
 }
 

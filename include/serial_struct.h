@@ -262,7 +262,7 @@ typedef struct
                 fdcan_msg_s fdcan_msg;
                 version_s version;
                 port_motor_state_t motor_state;
-                prot_motor_version_t motor_version[30];
+                prot_motor_version_t motor_version[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_version_t)];
                 prot_motor_model_t motor_model[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_model_t)];
                 uint8_t raw[PROT_DATA_LEN - sizeof(fdcan_state_s)];
             };

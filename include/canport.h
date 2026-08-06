@@ -53,6 +53,8 @@ public:
     void pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe);
     void pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, float kp, float kd);
 
+    void request_motor_state(void);
+
     motor_state_t *get_motor_state(uint8_t id);
 
     void send(void);

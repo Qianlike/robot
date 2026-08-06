@@ -20,8 +20,6 @@ int main()
     canport port1(1, {1, 2});
     // canport port2(2, {4, 5, 6});
 
-    exit(1);
-
     while (!exitFlag.load())
     {
         for (auto it : port1.map_motors_state)
@@ -31,9 +29,10 @@ int main()
         
 
 
-        port1.velocity(1, 0.314);
-        port1.velocity(2, 0.314);
-        port1.send();
+        // port1.velocity(1, 0.314);
+        // port1.velocity(2, 0.314);
+        // port1.send();
+        port1.request_motor_state();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
