@@ -3,6 +3,7 @@
 #include "convert.h"
 
 #include <algorithm>
+#include <string>
 
 
 
@@ -91,6 +92,7 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     set_cache_num(map_motors_state.size());
 
     check_motor_version();
+    check_motor_model();
 
     PRINT_INFO_G("canport%d init ok\n", canport_id);
 }
@@ -440,13 +442,58 @@ void canport::check_motor_version()
             }
         }
 
-        printf("size = %d\n", failed_id_list.size());
+        printf("size = %ld\n", failed_id_list.size());
         if (failed_id_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
                 PRINT_INFO("canport%d motor%d version = v%d.%d.%d", canport_id, it.first, 
                     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
+            }
+            return;
+        }
+    }
+
+    PRINT_ERROR("canport%d error", canport_id);
+    for (auto it: failed_id_list)
+    {
+        PRINT_ERROR("canport%d motor%d", canport_id, it);
+    }
+}
+
+
+void canport::request_motor_model()
+{
+    port_tdata_clean(MODE_MOTOR_MODEL, 0);
+    send();
+}
+
+
+void canport::check_motor_model()
+{
+    std::vector<uint8_t> failed_id_list;
+
+    for (int i = 0; i < 100; i++)
+    {
+        request_motor_model();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        failed_id_list.clear();
+        for (auto it : map_motors_state)
+        {
+            if (it.second.model.size() == 0)
+            {
+                failed_id_list.push_back(it.first);
+            }
+        }
+
+        printf("size = %ld\n", failed_id_list.size());
+        if (failed_id_list.size() == 0)
+        {
+            for (auto it : map_motors_state)
+            {
+                PRINT_INFO("canport%d motor%d model = %s", canport_id, it.first, 
+                    it.second.model.c_str());
             }
             return;
         }
@@ -608,7 +655,16 @@ void canport::recv()
                         it->second.fw_version.patch = prot_rdata.data.s.motor_version->patch;
                     }
                 }
-
+                break;
+            case MODE_MOTOR_MODEL:
+                for (int i = 0; i < (prot_rdata.head.s.len - 3) / sizeof(prot_motor_model_t); i++)
+                {
+                    auto it = map_motors_state.find(prot_rdata.data.s.motor_model[i].id);
+                    if (it != map_motors_state.end())
+                    {
+                        it->second.model = std::string(prot_rdata.data.s.motor_model[i].data, prot_rdata.data.s.motor_model[i].len);
+                    }
+                }
                 break;
             default:
                 break;

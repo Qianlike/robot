@@ -206,6 +206,14 @@ typedef struct
 } prot_motor_version_t;
 
 
+typedef struct 
+{
+    uint8_t id;
+    uint8_t len;
+    char data[20];
+} prot_motor_model_t;
+
+
 
 typedef struct 
 {
@@ -255,6 +263,7 @@ typedef struct
                 version_s version;
                 port_motor_state_t motor_state;
                 prot_motor_version_t motor_version[30];
+                prot_motor_model_t motor_model[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_model_t)];
                 uint8_t raw[PROT_DATA_LEN - sizeof(fdcan_state_s)];
             };
         } s;

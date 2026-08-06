@@ -90,6 +90,9 @@ private:
     void request_motor_version(void);
     void check_motor_version(void);
 
+    void request_motor_model(void);
+    void check_motor_model(void);
+
     void recv();
 };
 
