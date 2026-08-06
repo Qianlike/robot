@@ -32,7 +32,11 @@ int main()
         // port1.velocity(1, 0.314);
         // port1.velocity(2, 0.314);
         // port1.send();
-        port1.request_motor_state();
+        // port1.request_motor_state();
+        // port1.stop(1);
+        port1.brake(1);
+        port1.brake(2);
+        port1.send();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

@@ -52,6 +52,12 @@ public:
     void pos_vel_acc(uint8_t id, float pos, float vel, float acc);
     void pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe);
     void pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, float kp, float kd);
+    
+    void stop();
+    void stop(uint8_t id);
+
+    void brake();
+    void brake(uint8_t id);
 
     void request_motor_state(void);
 

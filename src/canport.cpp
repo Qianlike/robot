@@ -279,6 +279,10 @@ uint16_t canport::get_data_len(uint8_t mode, uint16_t num)
     uint8_t motor_one_len = 0;
     switch (mode)
     {
+        case MODE_STOP:
+        case MODE_BRAKE:
+            motor_one_len = 1;
+            break;
         case MODE_POSITION:
         case MODE_VELOCITY:
         case MODE_TORQUE:
@@ -352,9 +356,20 @@ void canport::motor_tdata_clean(uint8_t cmd)
         prot_tdata.head.s.head = PROT_HEAD;
         prot_tdata.head.s.cmd = cmd;
         prot_tdata.head.s.len = get_data_len(cmd, id_max);
-        for (int i = 0; i < id_max; i++)
+
+        if (cmd >= MODE_STOP && cmd <= MODE_BRAKE)
         {
-            prot_tdata.data.contr.raw16[i] = 0x8000;
+            for (int i = 0; i < id_max; i++)
+            {
+                prot_tdata.data.contr.raw8[i] = 0;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < id_max; i++)
+            {
+                prot_tdata.data.contr.raw16[i] = 0x8000;
+            }
         }
         prot_tdata.data.contr.data_type = TINT16_NOHDR;
         prot_tdata.data.contr.query = QUERY_MODE_FAULT_POS_VEL_TQE;
@@ -417,6 +432,40 @@ void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, flo
     prot_tdata.data.contr.pvtpd[id -1].tqe = tqe_float2int(tqe);
     prot_tdata.data.contr.pvtpd[id -1].kp = kp_float2int(kp);
     prot_tdata.data.contr.pvtpd[id -1].kd = kd_float2int(kd);
+}
+
+
+void canport::stop(uint8_t id)
+{
+    motor_tdata_clean(MODE_STOP);
+    prot_tdata.data.contr.raw8[id - 1] = 1;
+}
+
+
+void canport::stop()
+{
+    motor_tdata_clean(MODE_STOP);
+    for (auto it : map_motors_state)
+    {
+        prot_tdata.data.contr.raw8[it.first - 1] = 1;
+    }
+}
+
+
+void canport::brake(uint8_t id)
+{
+    motor_tdata_clean(MODE_BRAKE);
+    prot_tdata.data.contr.raw8[id - 1] = 1;
+}
+
+
+void canport::brake()
+{
+    motor_tdata_clean(MODE_BRAKE);
+    for (auto it : map_motors_state)
+    {
+        prot_tdata.data.contr.raw8[it.first - 1] = 1;
+    }
 }
 
 

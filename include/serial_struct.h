@@ -21,17 +21,14 @@
 #define  MODE_MOTOR_STATE       20  // 查询电机状态
 #define  MODE_MOTOR_VERSION     21  // 电机版本号
 #define  MODE_MOTOR_MODEL       22  // 电机型号
-#define  MODE_MOTOR_RESET       23  // 电机重启
-#define  MODE_MOTOR_STOP        24  // 电机停止
-#define  MODE_MOTOR_BRAKE       25  // 电机刹车
-#define  MODE_MOTOR_POS_RESET   26  // 重置电机零位
-
 
 #define  MODE_POSITION              0X80
 #define  MODE_VELOCITY              0X81
 #define  MODE_TORQUE                0X82
 #define  MODE_VOLTAGE               0X83
 #define  MODE_CURRENT               0X84
+#define  MODE_STOP                  0X85
+#define  MODE_BRAKE                 0X86
 
 #define  MODE_VEL_ACC               0X90
 #define  MODE_POS_VEL_TQE           0X92
