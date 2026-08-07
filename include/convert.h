@@ -1,5 +1,5 @@
-#ifndef _CONVERT_H
-#define _CONVERT_H
+#ifndef HIGHTORQUE_CONVERT_H
+#define HIGHTORQUE_CONVERT_H
 
 
 #include "common_macros.h"
@@ -22,7 +22,7 @@ typedef enum
     RADIAN_2PI = 0, // 弧度
     ANGLE_360,      // 角度
     TURNS           // 圈数
-} AngleUnit_t;
+} angle_unit_t;
 
 
 #define ANGLE_UNIT  RADIAN_2PI

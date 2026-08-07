@@ -1,5 +1,5 @@
-#ifndef _ROBOT_H
-#define _ROBOT_H
+#ifndef HIGHTORQUE_ROBOT_H
+#define HIGHTORQUE_ROBOT_H
 
 
 
@@ -10,13 +10,13 @@
 
 
 
-class robot
+class Robot
 {
 public:
-    robot();
-    ~robot();
+    Robot();
+    ~Robot();
 private:
-    std::vector<std::unique_ptr<canport>> canports;
+    std::vector<std::unique_ptr<CanPort>> can_ports;
     // std::vector<motor> motors;
 };
 

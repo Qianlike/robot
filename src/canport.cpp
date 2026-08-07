@@ -9,10 +9,10 @@
 
 static std::vector<std::string> ser_list{};
 
-canport::canport(uint8_t _canport_id, std::string _ser_name, const RobotParams robot_params)
+CanPort::CanPort(uint8_t _can_port_id, std::string _ser_name, const RobotParams robot_params)
 {
     PRINT_INFO_G("FDCAN_PASS version: %d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
-    canport_id = _canport_id;
+    can_port_id = _can_port_id;
 
     ser_init(_ser_name);
     get_comm_version();
@@ -22,11 +22,11 @@ canport::canport(uint8_t _canport_id, std::string _ser_name, const RobotParams r
         exit(1);
     }
 
-    const int motor_num = robot_params.canports[canport_id - 1].motor_num;
+    const int motor_num = robot_params.can_ports[can_port_id - 1].motor_num;
     if (motor_num < 1 || motor_num > 30)
     {
-        PRINT_ERROR("canport%d motor_num err!! got %d, valid range [1, 30]",
-                    canport_id, motor_num);
+        PRINT_ERROR("CanPort%d motor_num err!! got %d, valid range [1, 30]",
+                    can_port_id, motor_num);
         exit(1);
     }
 
@@ -35,14 +35,14 @@ canport::canport(uint8_t _canport_id, std::string _ser_name, const RobotParams r
 }
 
 
-canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
+CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> _id_list)
 {
-    if (_canport_id < 1)
+    if (_can_port_id < 1)
     {
-        PRINT_ERROR("_canport_id err!! got %d, must be >= 1", _canport_id);
+        PRINT_ERROR("_can_port_id err!! got %d, must be >= 1", _can_port_id);
         exit(1);
     }
-    canport_id = _canport_id;
+    can_port_id = _can_port_id;
 
     if (_id_list.size() == 0)
     {
@@ -74,13 +74,13 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
         }
     }
 
-    if (_canport_id > ser_list.size())
+    if (_can_port_id > ser_list.size())
     {
-        PRINT_ERROR("Not enough serial ports: found %zu, need %d (canport_id)", ser_list.size(), _canport_id);
+        PRINT_ERROR("Not enough serial ports: found %zu, need %d (can_port_id)", ser_list.size(), _can_port_id);
         exit(1);
     }
-    PRINT_INFO_G("canport%d init", canport_id);
-    ser_init(ser_list[canport_id - 1]);
+    PRINT_INFO_G("CanPort%d init", can_port_id);
+    ser_init(ser_list[can_port_id - 1]);
     get_comm_version();
     if (comm_version.data32 < VER_COMBINE(6, 0, 0))
     {
@@ -97,12 +97,12 @@ canport::canport(uint8_t _canport_id, std::initializer_list<int> _id_list)
     request_motor_state();
     request_motor_state();
 
-    PRINT_INFO_G("canport%d init ok\n", canport_id);
+    PRINT_INFO_G("CanPort%d init ok\n", can_port_id);
 }
 
-canport::~canport()
+CanPort::~CanPort()
 {
-    PRINT_INFO_G("canport%d close", canport_id);
+    PRINT_INFO_G("CanPort%d close", can_port_id);
     ser_dev.close();
 
     if (ser_recv_thread.joinable())
@@ -112,7 +112,7 @@ canport::~canport()
 }
 
 
-void canport::port_tdata_clean(const uint8_t mode, const uint16_t len)
+void CanPort::port_tdata_clean(const uint8_t mode, const uint16_t len)
 {
     if (prot_tdata.head.s.cmd != mode)
     {
@@ -124,7 +124,7 @@ void canport::port_tdata_clean(const uint8_t mode, const uint16_t len)
 }
 
 
-std::vector<std::string> canport::get_ser_list(std::string serial_full_prefix)
+std::vector<std::string> CanPort::get_ser_list(std::string serial_full_prefix)
 {
     std::vector<serial::PortInfo> all_ports = serial::list_ports();
     std::vector<std::string> com_board_ports;
@@ -184,7 +184,7 @@ std::vector<std::string> canport::get_ser_list(std::string serial_full_prefix)
 }
 
 
-void canport::ser_init(std::string port_name)
+void CanPort::ser_init(std::string port_name)
 {
     PRINT_INFO_G("port_name: %s", port_name.c_str());
 
@@ -204,11 +204,11 @@ void canport::ser_init(std::string port_name)
     }
     
     PRINT_INFO_G("Serial Port %s initialized", port_name.c_str());
-    ser_recv_thread = std::thread(&canport::recv, this);
+    ser_recv_thread = std::thread(&CanPort::recv, this);
 }
 
 
-void canport::get_comm_version()
+void CanPort::get_comm_version()
 {
     port_tdata_clean(MODE_COMM_VERSION, 0);
 
@@ -228,7 +228,7 @@ void canport::get_comm_version()
 }
 
 
-void canport::comm_init()
+void CanPort::comm_init()
 {
     port_tdata_clean(MODE_COMM_INIT, 0);
 
@@ -251,7 +251,7 @@ void canport::comm_init()
 }
 
 
-void canport::set_cache_num(uint8_t num)
+void CanPort::set_cache_num(uint8_t num)
 {
     port_tdata_clean(MODE_CACHE_NUM, 1);
 
@@ -274,7 +274,7 @@ void canport::set_cache_num(uint8_t num)
 }
 
 
-uint16_t canport::get_data_len(uint8_t mode, uint16_t num)
+uint16_t CanPort::get_data_len(uint8_t mode, uint16_t num)
 {
     uint8_t motor_one_len = 0;
     switch (mode)
@@ -349,7 +349,7 @@ uint16_t canport::get_data_len(uint8_t mode, uint16_t num)
 }
 
 
-void canport::motor_tdata_clean(uint8_t cmd)
+void CanPort::motor_tdata_clean(uint8_t cmd)
 {
     if (prot_tdata.head.s.cmd != cmd)
     {
@@ -377,28 +377,28 @@ void canport::motor_tdata_clean(uint8_t cmd)
 }
 
 
-void canport::position(uint8_t id, float pos)
+void CanPort::position(uint8_t id, float pos)
 {
     motor_tdata_clean(MODE_POSITION);
     prot_tdata.data.contr.raw16[id -1] = pos_float2int(pos);
 }
 
 
-void canport::velocity(uint8_t id, float vel)
+void CanPort::velocity(uint8_t id, float vel)
 {
     motor_tdata_clean(MODE_VELOCITY);
     prot_tdata.data.contr.raw16[id -1] = vel_float2int(vel);
 }
 
 
-void canport::turque(uint8_t id, float tqe)
+void CanPort::torque(uint8_t id, float tqe)
 {
     motor_tdata_clean(MODE_TORQUE);
     prot_tdata.data.contr.raw16[id -1] = tqe_float2int(tqe);
 }
 
 
-void canport::vel_acc(uint8_t id, float vel, float acc)
+void CanPort::vel_acc(uint8_t id, float vel, float acc)
 {
     motor_tdata_clean(MODE_VEL_ACC);
     prot_tdata.data.contr.va[id -1].vel = vel_float2int(vel);
@@ -406,7 +406,7 @@ void canport::vel_acc(uint8_t id, float vel, float acc)
 }
 
 
-void canport::pos_vel_acc(uint8_t id, float pos, float vel, float acc)
+void CanPort::pos_vel_acc(uint8_t id, float pos, float vel, float acc)
 {
     motor_tdata_clean(MODE_POS_VEL_ACC);
     prot_tdata.data.contr.pva[id -1].pos = pos_float2int(pos);
@@ -415,7 +415,7 @@ void canport::pos_vel_acc(uint8_t id, float pos, float vel, float acc)
 }
 
 
-void canport::pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe)
+void CanPort::pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe)
 {   
     motor_tdata_clean(MODE_POS_VEL_TQE);
     prot_tdata.data.contr.pvt[id -1].pos = pos_float2int(pos);
@@ -424,7 +424,7 @@ void canport::pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe)
 }   
 
 
-void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, float kp, float kd)
+void CanPort::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, float kp, float kd)
 {
     motor_tdata_clean(MODE_POS_VEL_TQE_KP_KD);
     prot_tdata.data.contr.pvtpd[id -1].pos = pos_float2int(pos);
@@ -435,14 +435,14 @@ void canport::pos_vel_tqe_kp_kd(uint8_t id, float pos, float vel, float tqe, flo
 }
 
 
-void canport::stop(uint8_t id)
+void CanPort::stop(uint8_t id)
 {
     motor_tdata_clean(MODE_STOP);
     prot_tdata.data.contr.raw8[id - 1] = 1;
 }
 
 
-void canport::stop()
+void CanPort::stop()
 {
     motor_tdata_clean(MODE_STOP);
     for (auto it : map_motors_state)
@@ -452,14 +452,14 @@ void canport::stop()
 }
 
 
-void canport::reset(uint8_t id)
+void CanPort::reset(uint8_t id)
 {
     motor_tdata_clean(MODE_RESET);
     prot_tdata.data.contr.raw8[id - 1] = 1;
 }
 
 
-void canport::reset()
+void CanPort::reset()
 {
     motor_tdata_clean(MODE_RESET);
     for (auto it : map_motors_state)
@@ -469,14 +469,14 @@ void canport::reset()
 }
 
 
-void canport::brake(uint8_t id)
+void CanPort::brake(uint8_t id)
 {
     motor_tdata_clean(MODE_BRAKE);
     prot_tdata.data.contr.raw8[id - 1] = 1;
 }
 
 
-void canport::brake()
+void CanPort::brake()
 {
     motor_tdata_clean(MODE_BRAKE);
     for (auto it : map_motors_state)
@@ -486,14 +486,14 @@ void canport::brake()
 }
 
 
-void canport::request_motor_version()
+void CanPort::request_motor_version()
 {
     port_tdata_clean(MODE_MOTOR_VERSION, 0);
     send();
 }
 
 
-void canport::request_motor_state()
+void CanPort::request_motor_state()
 {
     port_tdata_clean(MODE_MOTOR_STATE, 2);
     prot_tdata.data.contr.data_type = TINT16_NOHDR;
@@ -502,7 +502,7 @@ void canport::request_motor_state()
 }
 
 
-void canport::request_pos_reset()
+void CanPort::request_pos_reset()
 {
     port_tdata_clean(MODE_MOTOR_POS_RESET, id_max);
 
@@ -514,7 +514,7 @@ void canport::request_pos_reset()
     send();
 }
 
-void canport::check_motor_pos_reset()
+void CanPort::check_motor_pos_reset()
 {
     std::vector<uint8_t> failed_id_list;
 
@@ -542,7 +542,7 @@ void canport::check_motor_pos_reset()
         {
             for (auto it : map_motors_state)
             {
-                // PRINT_INFO("canport%d motor%d version = v%d.%d.%d", canport_id, it.first, 
+                // PRINT_INFO("CanPort%d motor%d version = v%d.%d.%d", can_port_id, it.first, 
                 //     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
                 PRINT_INFO_G("pos resset ok");
             }
@@ -550,15 +550,15 @@ void canport::check_motor_pos_reset()
         }
     }
 
-    PRINT_ERROR("canport%d error", canport_id);
+    PRINT_ERROR("CanPort%d error", can_port_id);
     for (auto it: failed_id_list)
     {
-        PRINT_ERROR("canport%d motor%d", canport_id, it);
+        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
 }
 
 
-void canport::check_motor_version()
+void CanPort::check_motor_version()
 {
     std::vector<uint8_t> failed_id_list;
 
@@ -581,29 +581,29 @@ void canport::check_motor_version()
         {
             for (auto it : map_motors_state)
             {
-                PRINT_INFO("canport%d motor%d version = v%d.%d.%d", canport_id, it.first, 
+                PRINT_INFO("CanPort%d motor%d version = v%d.%d.%d", can_port_id, it.first, 
                     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
             }
             return;
         }
     }
 
-    PRINT_ERROR("canport%d error", canport_id);
+    PRINT_ERROR("CanPort%d error", can_port_id);
     for (auto it: failed_id_list)
     {
-        PRINT_ERROR("canport%d motor%d", canport_id, it);
+        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
 }
 
 
-void canport::request_motor_model()
+void CanPort::request_motor_model()
 {
     port_tdata_clean(MODE_MOTOR_MODEL, 0);
     send();
 }
 
 
-void canport::check_motor_model()
+void CanPort::check_motor_model()
 {
     std::vector<uint8_t> failed_id_list;
 
@@ -626,22 +626,22 @@ void canport::check_motor_model()
         {
             for (auto it : map_motors_state)
             {
-                PRINT_INFO("canport%d motor%d model = %s", canport_id, it.first, 
+                PRINT_INFO("CanPort%d motor%d model = %s", can_port_id, it.first, 
                     it.second.model.c_str());
             }
             return;
         }
     }
 
-    PRINT_ERROR("canport%d error", canport_id);
+    PRINT_ERROR("CanPort%d error", can_port_id);
     for (auto it: failed_id_list)
     {
-        PRINT_ERROR("canport%d motor%d", canport_id, it);
+        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
 }
 
 
-motor_state_t *canport::get_motor_state(uint8_t id)
+motor_state_t *CanPort::get_motor_state(uint8_t id)
 {
     auto it = map_motors_state.find(id);
     if (it == map_motors_state.end())
@@ -653,19 +653,19 @@ motor_state_t *canport::get_motor_state(uint8_t id)
 }
 
 
-fdcan_state_s *canport::get_canport_state()
+fdcan_state_s *CanPort::get_can_port_state()
 {
-    return &canport_state;
+    return &can_port_state;
 }
 
 
-prot_cdc2comm_s *canport::get_tdata()
+prot_cdc2comm_s *CanPort::get_tdata()
 {
     return &prot_tdata;
 }
 
 
-void canport::send()
+void CanPort::send()
 {
     prot_tdata.head.s.crc_head = crc8_ccitt(&(prot_tdata.head.raw[1]), 3);
     prot_tdata.head.s.crc_data = crc8_ccitt(&(prot_tdata.data.raw[0]), prot_tdata.head.s.len);
@@ -695,7 +695,7 @@ void canport::send()
 }
 
 
-void canport::recv()
+void CanPort::recv()
 {
     prot_comm2cdc_s prot_rdata = {0};
 
@@ -733,14 +733,14 @@ void canport::recv()
             printf("\n");
             #endif
 
-            canport_state = prot_rdata.data.s.fdcan_state;
-            if (canport_state.fault > FDCAN_STATUS_ERROR_WARNING || canport_state.fault == FDCAN_STATUS_UNKNOWN)
+            can_port_state = prot_rdata.data.s.fdcan_state;
+            if (can_port_state.fault > FDCAN_STATUS_ERROR_WARNING || can_port_state.fault == FDCAN_STATUS_UNKNOWN)
             {
-                PRINT_ERROR("canport[%d] flaut = %d, rx = %d, tx = %d", canport_id, canport_state.fault, canport_state.rx_err_num, canport_state.tx_err_num);
+                PRINT_ERROR("CanPort[%d] flaut = %d, rx = %d, tx = %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
             }
-            else if (canport_state.fault == FDCAN_STATUS_ERROR_WARNING)
+            else if (can_port_state.fault == FDCAN_STATUS_ERROR_WARNING)
             {
-                PRINT_INFO("canport[%d] flaut = %d, rx = %d, tx = %d", canport_id, canport_state.fault, canport_state.rx_err_num, canport_state.tx_err_num);
+                PRINT_INFO("CanPort[%d] flaut = %d, rx = %d, tx = %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
             }
 
             switch (prot_rdata.head.s.cmd)

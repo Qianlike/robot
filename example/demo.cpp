@@ -8,20 +8,20 @@
 
 
 
-std::atomic<bool> exitFlag(false);
-void signalHandler(int signum) 
+std::atomic<bool> exit_flag(false);
+void signal_handler(int signum) 
 {
-    exitFlag.store(true);
+    exit_flag.store(true);
 }
 
 int main()
 {
-    std::signal(SIGINT, signalHandler);
-    canport port1(1, {1, 2});
-    // canport port2(2, {4, 5, 6});
+    std::signal(SIGINT, signal_handler);
+    CanPort port1(1, {1, 2});
+    // CanPort port2(2, {4, 5, 6});
 
     int num = 0;
-    while (!exitFlag.load())
+    while (!exit_flag.load())
     {
         for (auto it : port1.map_motors_state)
         {

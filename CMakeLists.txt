@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.5...3.30)
 project(hightorque_fdcan)
 
 # ==================== 基础设置 ====================

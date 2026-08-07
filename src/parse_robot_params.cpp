@@ -135,15 +135,15 @@ RobotParams parse_robot_params()
         const std::string robot_path = "robot";
 
         readConfigParam(robot_node, "robot_name", params.robot_name, robot_path);
-        readConfigParam(robot_node, "canport_num", params.canport_num, robot_path);
+        readConfigParam(robot_node, "canport_num", params.can_port_num, robot_path);
 
         if (robot_node["canport"])
         {
-            YAML::Node canport_node = robot_node["canport"];
+            YAML::Node can_port_node = robot_node["canport"];
             int port_num = 0;
 
-            for (YAML::const_iterator it = canport_node.begin();
-                 it != canport_node.end() && port_num < params.canport_num;
+            for (YAML::const_iterator it = can_port_node.begin();
+                 it != can_port_node.end() && port_num < params.can_port_num;
                  ++it, ++port_num)
             {
                 std::string port_name = it->first.as<std::string>();
@@ -151,8 +151,8 @@ RobotParams parse_robot_params()
 
                 const std::string port_path = robot_path + ".canport." + port_name;
 
-                CANPortParams port;
-                readConfigParam(port_node, "canport_id", port.canport_id, port_path);
+                CanPortParams port;
+                readConfigParam(port_node, "canport_id", port.can_port_id, port_path);
                 readConfigParam(port_node, "motor_num", port.motor_num, port_path);
 
                 if (port_node["motor"])
@@ -177,13 +177,13 @@ RobotParams parse_robot_params()
                     }
                 }
 
-                params.canports.push_back(port);
+                params.can_ports.push_back(port);
             }
         }
 
         PRINT_INFO_G("Load robot params success: robot_name=%s, canport_num=%d",
                      params.robot_name.c_str(),
-                     params.canport_num);
+                     params.can_port_num);
     }
     else
     {

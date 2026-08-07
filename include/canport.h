@@ -1,4 +1,7 @@
 
+#ifndef HIGHTORQUE_CANPORT_H
+#define HIGHTORQUE_CANPORT_H
+
 #include "serial_struct.h"
 #include "serial/serial.h"
 #include "common_macros.h"
@@ -30,24 +33,24 @@ typedef struct
 } motor_state_t;
 
 
-class canport
+class CanPort
 {
 public:
-    fdcan_state_s canport_state;
+    fdcan_state_s can_port_state;
     std::map<int, motor_state_t> map_motors_state;
 
-    canport(uint8_t _canport_id, std::string _ser_name, const RobotParams robot_params);
-    canport(uint8_t _canport_id, std::initializer_list<int> id_list);
-    ~canport();
+    CanPort(uint8_t _can_port_id, std::string _ser_name, const RobotParams robot_params);
+    CanPort(uint8_t _can_port_id, std::initializer_list<int> id_list);
+    ~CanPort();
 
-    canport(const canport&) = delete;
-    canport& operator=(const canport&) = delete;
-    canport(canport&&) = delete;
-    canport& operator=(canport&&) = delete;
+    CanPort(const CanPort&) = delete;
+    CanPort& operator=(const CanPort&) = delete;
+    CanPort(CanPort&&) = delete;
+    CanPort& operator=(CanPort&&) = delete;
 
     void position(uint8_t id, float pos);
     void velocity(uint8_t id, float vel);
-    void turque(uint8_t id, float tqe);
+    void torque(uint8_t id, float tqe);
     void vel_acc(uint8_t id, float vel, float acc);
     void pos_vel_acc(uint8_t id, float pos, float vel, float acc);
     void pos_vel_MAXtqe(uint8_t id, float pos, float vel, float max_tqe);
@@ -68,7 +71,7 @@ public:
     motor_state_t *get_motor_state(uint8_t id);
 
     void send(void);
-    fdcan_state_s *get_canport_state(void);
+    fdcan_state_s *get_can_port_state(void);
     prot_cdc2comm_s *get_tdata(void);
 private:
     version_s comm_version  // 通信板版本号
@@ -79,7 +82,7 @@ private:
     {
         .data32 = HIGHTORQUE_FDCAN_VERSION,
     };
-    uint8_t canport_id = 0;
+    uint8_t can_port_id = 0;
 
     prot_cdc2comm_s prot_tdata;
     serial::Serial ser_dev;
@@ -110,3 +113,4 @@ private:
     void recv();
 };
 
+#endif

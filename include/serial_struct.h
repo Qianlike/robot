@@ -1,5 +1,5 @@
-#ifndef _SERIAL_STRUCT_H_
-#define _SERIAL_STRUCT_H_
+#ifndef HIGHTORQUE_SERIAL_STRUCT_H
+#define HIGHTORQUE_SERIAL_STRUCT_H
 
 
 #include <stdint.h>
@@ -122,15 +122,15 @@ typedef struct
     uint16_t len;
     uint8_t  crc_head;
     uint8_t  crc_data;
-} prot_head_ss;
+} prot_head_fields_s;
 
 
 typedef struct
 {
     union
     {
-        prot_head_ss s;
-        uint8_t raw[sizeof(prot_head_ss)];
+        prot_head_fields_s s;
+        uint8_t raw[sizeof(prot_head_fields_s)];
     };
 } prot_head_s;
 
@@ -227,7 +227,7 @@ typedef struct
     {
         query_mode_fault_pos_vel_tqe_t mfpvt[30];
     };
-} port_motor_state_t;
+} prot_motor_state_t;
 
 
 
@@ -266,7 +266,7 @@ typedef struct
             {
                 fdcan_msg_s fdcan_msg;
                 version_s version;
-                port_motor_state_t motor_state;
+                prot_motor_state_t motor_state;
                 prot_motor_flag_t motor_flag[30];
                 prot_motor_version_t motor_version[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_version_t)];
                 prot_motor_model_t motor_model[(PROT_DATA_LEN - sizeof(fdcan_state_s)) / sizeof(prot_motor_model_t)];

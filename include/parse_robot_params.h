@@ -1,5 +1,5 @@
-#ifndef _PARSE_ROBOT_PATAMS_H
-#define _PARSE_ROBOT_PATAMS_H
+#ifndef HIGHTORQUE_PARSE_ROBOT_PARAMS_H
+#define HIGHTORQUE_PARSE_ROBOT_PARAMS_H
 
 
 #include <string>
@@ -13,9 +13,9 @@ struct MotorParams
     std::string name;
 };
 
-struct CANPortParams
+struct CanPortParams
 {
-    int canport_id = 0;
+    int can_port_id = 0;
     int motor_num = 0;
     std::vector<MotorParams> motors;
 };
@@ -23,8 +23,8 @@ struct CANPortParams
 struct RobotParams
 {
     std::string robot_name;
-    int canport_num = 0;
-    std::vector<CANPortParams> canports;
+    int can_port_num = 0;
+    std::vector<CanPortParams> can_ports;
 };
 
 

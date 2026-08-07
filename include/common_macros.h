@@ -1,5 +1,5 @@
-#ifndef _COMMMON_MACROS_H
-#define _COMMMON_MACROS_H
+#ifndef HIGHTORQUE_COMMON_MACROS_H
+#define HIGHTORQUE_COMMON_MACROS_H
 
 
 #include <cstdio>

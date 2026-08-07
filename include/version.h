@@ -1,5 +1,5 @@
-#ifndef _VERSION_H
-#define _VERSION_H
+#ifndef HIGHTORQUE_VERSION_H
+#define HIGHTORQUE_VERSION_H
 
 
 // #include "serial_struct.h"
