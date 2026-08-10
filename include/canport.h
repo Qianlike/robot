@@ -1,11 +1,10 @@
 
-#ifndef HIGHTORQUE_CANPORT_H
-#define HIGHTORQUE_CANPORT_H
+#ifndef _HIGHTORQUE_CANPORT_H
+#define _HIGHTORQUE_CANPORT_H
 
 #include "serial_struct.h"
 #include "serial/serial.h"
 #include "common_macros.h"
-#include "parse_robot_params.h"
 #include "version.h"
 
 #include <iostream>
@@ -41,7 +40,6 @@ public:
     fdcan_state_s can_port_state;
     std::map<int, motor_state_t> map_motors_state;
 
-    CanPort(uint8_t _can_port_id, const RobotParams robot_params);
     CanPort(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name);
     CanPort(uint8_t _can_port_id, std::initializer_list<int> id_list);
     ~CanPort();
@@ -75,7 +73,6 @@ public:
 
     void send(void);
     fdcan_state_s *get_can_port_state(void);
-    prot_cdc2comm_s *get_tdata(void);
 private:
     version_s comm_version  // 通信板版本号
     {

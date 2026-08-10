@@ -25,28 +25,37 @@ add_subdirectory(lib/yaml-cpp)
 set(SOURCE_FILES
     src/robot.cpp
     src/canport.cpp
-    # src/motor.cpp
+    src/motor.cpp
     src/crc.cpp
     src/convert.cpp
     src/parse_robot_params.cpp
 )
 
 # ==================== 可执行文件 ====================
-add_executable(demo
-    ${SOURCE_FILES}
-    example/demo.cpp
-)
-
-
-target_include_directories(demo PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include
+set(DEMO_FILES
+    example/demo1.cpp
+    example/demo2.cpp
 )
 
 find_package(Threads REQUIRED)
-target_link_libraries(demo PRIVATE
-    serial
-    yaml-cpp
-    Threads::Threads
-)
+
+foreach(demo_file ${DEMO_FILES})
+    get_filename_component(demo_name ${demo_file} NAME_WE)
+
+    add_executable(${demo_name}
+        ${SOURCE_FILES}
+        ${demo_file}
+    )
+
+    target_include_directories(${demo_name} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include
+    )
+
+    target_link_libraries(${demo_name} PRIVATE
+        serial
+        yaml-cpp
+        Threads::Threads
+    )
+endforeach()
 

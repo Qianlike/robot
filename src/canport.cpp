@@ -9,18 +9,6 @@
 
 static std::vector<std::string> ser_list{};
 
-CanPort::CanPort(uint8_t _can_port_id, const RobotParams robot_params)
-{
-    std::map<uint8_t, std::string> map_id_name;
-    for (int id = 1; id <= robot_params.can_ports[_can_port_id - 1].motor_num; id++)
-    {
-        map_id_name.insert({static_cast<uint8_t>(id), ""});
-    }
-
-    init(_can_port_id, map_id_name);
-}
-
-
 CanPort::CanPort(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
 {
     init(_can_port_id, map_id_name);
@@ -669,12 +657,6 @@ motor_state_t *CanPort::get_motor_state(uint8_t id)
 fdcan_state_s *CanPort::get_can_port_state()
 {
     return &can_port_state;
-}
-
-
-prot_cdc2comm_s *CanPort::get_tdata()
-{
-    return &prot_tdata;
 }
 
 
