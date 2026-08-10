@@ -7,12 +7,12 @@ static int16_t int16_limit(const int32_t data, const std::string &str)
 {
     if (data >= 32760)
     {
-        PRINT_ERROR("%s: data=%d >= +limit=%d", str.c_str(), data, 32760);
+        PRINT_ERROR("%s: data=%d out of range [-32760, 32760], clamped", str.c_str(), data);
         return static_cast<int16_t>(32760);
     }
     else if (data <= -32760)
     {
-        PRINT_ERROR("%s: data=%d <= -limit=%d", str.c_str(), data, -32760);
+        PRINT_ERROR("%s: data=%d out of range [-32760, 32760], clamped", str.c_str(), data);
         return static_cast<int16_t>(-32760);
     }
 

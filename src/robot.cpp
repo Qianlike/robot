@@ -37,7 +37,7 @@ CanPort *Robot::get_can_port(uint8_t can_port_id)
 {
     if (can_port_id < 1 || can_port_id > can_ports.size())
     {
-        PRINT_ERROR("can_port_id err!! got %d, valid range [1, %zu]", can_port_id, can_ports.size());
+        PRINT_ERROR("can_port_id err: got %d, valid range [1, %zu]", can_port_id, can_ports.size());
         return nullptr;
     }
     return can_ports[can_port_id - 1].get();
@@ -190,11 +190,11 @@ void Robot::request_motor_state()
 }
 
 
-void Robot::check_motor_pos_reset()
+void Robot::motor_zero_pos_reset()
 {
     for (auto& can_port : can_ports)
     {
-        can_port->check_motor_pos_reset();
+        can_port->motor_zero_pos_reset();
     }
 }
 

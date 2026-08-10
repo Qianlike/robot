@@ -121,7 +121,7 @@ RobotParams parse_robot_params()
 {
     auto param_file =
         YAML::LoadFile("../robot_param/robot_config.yaml")["param_file"].as<std::string>();
-    PRINT_INFO("patam_file: %s", param_file.c_str());
+    PRINT_INFO("param file: %s", param_file.c_str());
 
     auto config = YAML::LoadFile(param_file.c_str());
     RobotParams params;

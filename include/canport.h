@@ -67,7 +67,7 @@ public:
     void reset(uint8_t id);
 
     void request_motor_state(void);
-    void check_motor_pos_reset(void);
+    void motor_zero_pos_reset(void);
 
     motor_state_t *get_motor_state(uint8_t id);
 
@@ -110,7 +110,7 @@ private:
     void request_motor_model(void);
     void check_motor_model(void);
 
-    void request_pos_reset(void);
+    void request_zero_pos_reset(void);
 
     void recv();
 };

@@ -30,7 +30,7 @@ CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> id_list)
 
 CanPort::~CanPort()
 {
-    PRINT_INFO_G("CanPort%d close", can_port_id);
+    PRINT_INFO_G("[CanPort%d] close", can_port_id);
     ser_dev.close();
 
     if (ser_recv_thread.joinable())
@@ -42,11 +42,11 @@ CanPort::~CanPort()
 
 void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
 {
-    PRINT_INFO_G("FDCAN_PASS version: %d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
+    PRINT_INFO_G("SDK version: v%d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
 
     if (_can_port_id < 1)
     {
-        PRINT_ERROR("_can_port_id err!! got %d, must be >= 1", _can_port_id);
+        PRINT_ERROR("can_port_id err: got %d, must be >= 1", _can_port_id);
         exit(1);
     }
     can_port_id = _can_port_id;
@@ -54,7 +54,7 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
     const size_t id_num = map_id_name.size();
     if (id_num < 1 || id_num > 30)
     {
-        PRINT_ERROR("map_id_name err!! got %zu, valid range [1, 30]", id_num);
+        PRINT_ERROR("map_id_name err: got %zu, valid range [1, 30]", id_num);
         exit(1);
     }
 
@@ -63,7 +63,7 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
         const uint8_t id = it.first;
         if (id < 1 || id > 30)
         {
-            PRINT_ERROR("map_id_name err!! got %d, valid range [1, 30]", id);
+            PRINT_ERROR("map_id_name err: id %d, valid range [1, 30]", id);
             exit(1);
         }
         if (id_max < id)
@@ -77,25 +77,26 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
 
     if (ser_list.size() == 0)
     {
-        ser_list = get_ser_list("/dev/ttyACM");
+        const std::string ser_prefix = "/dev/ttyACM";
+        ser_list = get_ser_list(ser_prefix);
         if (ser_list.size() < 1)
         {
-            PRINT_ERROR("No serial ports found for prefix: /dev/ttyACM");
+            PRINT_ERROR("no serial port found, prefix: %S", ser_prefix.c_str());
             exit(1);
         }
     }
 
     if (_can_port_id > ser_list.size())
     {
-        PRINT_ERROR("Not enough serial ports: found %zu, need %d (can_port_id)", ser_list.size(), _can_port_id);
+        PRINT_ERROR("[CanPort%d] not enough serial ports: found %zu, need %d", _can_port_id, ser_list.size(), _can_port_id);
         exit(1);
     }
-    PRINT_INFO_G("CanPort%d init", can_port_id);
+    PRINT_INFO_G("[CanPort%d] init", can_port_id);
     ser_init(ser_list[can_port_id - 1]);
     get_comm_version();
     if (comm_version.data32 < VER_COMBINE(6, 0, 0))
     {
-        PRINT_ERROR("The communication board version is too low!!!");
+        PRINT_ERROR("[CanPort%d] comm board version too low: v%d.%d.%d, require >= v6.0.0", can_port_id, comm_version.major, comm_version.minor, comm_version.patch);
         exit(1);
     }
 
@@ -108,7 +109,7 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
     request_motor_state();
     request_motor_state();
 
-    PRINT_INFO_G("CanPort%d init ok\n", can_port_id);
+    PRINT_INFO_G("[CanPort%d] init ok", can_port_id);
 }
 
 
@@ -170,14 +171,14 @@ std::vector<std::string> CanPort::get_ser_list(std::string serial_full_prefix)
 
     if (com_board_ports.empty())
     {
-        PRINT_ERROR("No serial ports found for prefix: %s", serial_full_prefix.c_str());
+        PRINT_ERROR("no serial port found, prefix: %s", serial_full_prefix.c_str());
         exit(1);
     }
 
-    PRINT_INFO("Detected serial ports: ");
-    for (const auto& port_name : com_board_ports)
+    PRINT_INFO("detected %zu serial port(s):", com_board_ports.size());
+    for (size_t i = 0; i < com_board_ports.size(); i++)
     {
-        PRINT_INFO("%s", port_name.c_str());
+        PRINT_INFO("  [%zu] %s", i, com_board_ports[i].c_str());
     }
 
     return com_board_ports;
@@ -186,7 +187,7 @@ std::vector<std::string> CanPort::get_ser_list(std::string serial_full_prefix)
 
 void CanPort::ser_init(std::string port_name)
 {
-    PRINT_INFO_G("port_name: %s", port_name.c_str());
+    PRINT_INFO_G("[CanPort%d] serial port: %s", can_port_id, port_name.c_str());
 
     ser_dev.setPort(port_name.c_str());
     ser_dev.setBaudrate(4000000);
@@ -199,11 +200,11 @@ void CanPort::ser_init(std::string port_name)
     }
     catch(const std::exception& e)
     {
-        PRINT_ERROR("serial open err!!!");
+        PRINT_ERROR("[CanPort%d] serial open err: %s, %s", can_port_id, port_name.c_str(), e.what());
         exit(1);
     }
     
-    PRINT_INFO_G("Serial Port %s initialized", port_name.c_str());
+    PRINT_INFO_G("[CanPort%d] serial port %s init ok", can_port_id, port_name.c_str());
     ser_recv_thread = std::thread(&CanPort::recv, this);
 }
 
@@ -218,12 +219,12 @@ void CanPort::get_comm_version()
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         if (comm_version.data32 >= VER_COMBINE(3, 0, 0))
         {
-            PRINT_INFO_G("board version: v%d.%d.%d", comm_version.major, comm_version.minor, comm_version.patch);
+            PRINT_INFO_G("[CanPort%d] comm board version: v%d.%d.%d", can_port_id, comm_version.major, comm_version.minor, comm_version.patch);
             return;
         }
     }
 
-    PRINT_ERROR("Failed to retrieve the communication board version number!!!");
+    PRINT_ERROR("[CanPort%d] failed to get comm board version", can_port_id);
     exit(1);
 }
 
@@ -241,12 +242,12 @@ void CanPort::comm_init()
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         if (comm_init_flag != 0)
         {
-            PRINT_INFO_G("comm init");
+            PRINT_INFO_G("[CanPort%d] comm init ok", can_port_id);
             return;
         }
     }
 
-    PRINT_ERROR("comm init error!");
+    PRINT_ERROR("[CanPort%d] comm init err", can_port_id);
     exit(1);
 }
 
@@ -264,12 +265,12 @@ void CanPort::set_cache_num(uint8_t num)
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         if (set_cache_num_flag != 0)
         {
-            PRINT_INFO_G("set rdata max num");
+            PRINT_INFO_G("[CanPort%d] set cache num ok: %d", can_port_id, num);
             return;
         }
     }
 
-    PRINT_ERROR("set rdata max num");
+    PRINT_ERROR("[CanPort%d] set cache num err: %d", can_port_id, num);
     exit(1);
 }
 
@@ -302,8 +303,8 @@ uint16_t CanPort::get_data_len(uint8_t mode, uint16_t num)
             break;
         default:
             motor_one_len = 0;
-            PRINT_ERROR("This mode has beenThis mode is deprecated.");
-            exit(0);
+            PRINT_ERROR("mode %d has been deprecated", mode);
+            exit(1);
     }
 
     uint8_t fdcan_one_len = 60;
@@ -502,7 +503,7 @@ void CanPort::request_motor_state()
 }
 
 
-void CanPort::request_pos_reset()
+void CanPort::request_zero_pos_reset()
 {
     port_tdata_clean(MODE_MOTOR_POS_RESET, id_max);
 
@@ -514,9 +515,9 @@ void CanPort::request_pos_reset()
     send();
 }
 
-void CanPort::check_motor_pos_reset()
+void CanPort::motor_zero_pos_reset()
 {
-    std::vector<uint8_t> failedid_list;
+    std::vector<uint8_t> failed_id_list;
 
     for (auto it : map_motors_state)
     {
@@ -525,73 +526,66 @@ void CanPort::check_motor_pos_reset()
 
     for (int i = 0; i < 10; i++)
     {
-        request_pos_reset();
+        request_zero_pos_reset();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        failedid_list.clear();
+        failed_id_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.flag == 0)
             {
-                failedid_list.push_back(it.first);
+                failed_id_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failedid_list.size());
-        if (failedid_list.size() == 0)
+        if (failed_id_list.size() == 0)
         {
-            for (auto it : map_motors_state)
-            {
-                // PRINT_INFO("CanPort%d motor%d version = v%d.%d.%d", can_port_id, it.first, 
-                //     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
-                PRINT_INFO_G("pos resset ok");
-            }
+            PRINT_INFO_G("[CanPort%d] motor zero pos reset ok, %zu motor(s)", can_port_id, map_motors_state.size());
             return;
         }
     }
 
-    PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failedid_list)
+    PRINT_ERROR("[CanPort%d] motor zero pos reset err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
+    for (auto it : failed_id_list)
     {
-        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
+        PRINT_ERROR("  motor[%d]", it);
     }
 }
 
 
 void CanPort::check_motor_version()
 {
-    std::vector<uint8_t> failedid_list;
+    std::vector<uint8_t> failed_id_list;
 
     for (int i = 0; i < 100; i++)
     {
         request_motor_version();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        failedid_list.clear();
+        failed_id_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.fw_version.data32 == 0)
             {
-                failedid_list.push_back(it.first);
+                failed_id_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failedid_list.size());
-        if (failedid_list.size() == 0)
+        if (failed_id_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
-                PRINT_INFO("CanPort%d motor%d version = v%d.%d.%d", can_port_id, it.first, 
+                PRINT_INFO("[CanPort%d] motor[%d] fw version: v%d.%d.%d", can_port_id, it.first,
                     it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
             }
             return;
         }
     }
 
-    PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failedid_list)
+    PRINT_ERROR("[CanPort%d] motor fw version check err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
+    for (auto it : failed_id_list)
     {
-        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
+        PRINT_ERROR("  motor[%d]", it);
     }
 }
 
@@ -605,38 +599,37 @@ void CanPort::request_motor_model()
 
 void CanPort::check_motor_model()
 {
-    std::vector<uint8_t> failedid_list;
+    std::vector<uint8_t> failed_id_list;
 
     for (int i = 0; i < 100; i++)
     {
         request_motor_model();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        failedid_list.clear();
+        failed_id_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.model.size() == 0)
             {
-                failedid_list.push_back(it.first);
+                failed_id_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failedid_list.size());
-        if (failedid_list.size() == 0)
+        if (failed_id_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
-                PRINT_INFO("CanPort%d motor%d model = %s", can_port_id, it.first, 
+                PRINT_INFO("[CanPort%d] motor[%d] model: %s", can_port_id, it.first,
                     it.second.model.c_str());
             }
             return;
         }
     }
 
-    PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failedid_list)
+    PRINT_ERROR("[CanPort%d] motor model check err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
+    for (auto it : failed_id_list)
     {
-        PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
+        PRINT_ERROR("  motor[%d]", it);
     }
 }
 
@@ -646,7 +639,7 @@ motor_state_t *CanPort::get_motor_state(uint8_t id)
     auto it = map_motors_state.find(id);
     if (it == map_motors_state.end())
     {
-        PRINT_ERROR("CanPort%d motor%d not found", can_port_id, id);
+        PRINT_ERROR("[CanPort%d] motor[%d] not found", can_port_id, id);
         return nullptr;
     }
 
@@ -684,7 +677,7 @@ void CanPort::send()
     }
     catch(const std::exception& e)
     {
-        PRINT_ERROR("serial send err: %s", e.what());
+        PRINT_ERROR("[CanPort%d] serial send err: %s", can_port_id, e.what());
         ser_dev.close();
     }
 }
@@ -731,11 +724,11 @@ void CanPort::recv()
             can_port_state = prot_rdata.data.s.fdcan_state;
             if (can_port_state.fault > FDCAN_STATUS_ERROR_WARNING || can_port_state.fault == FDCAN_STATUS_UNKNOWN)
             {
-                PRINT_ERROR("CanPort[%d] flaut = %d, rx = %d, tx = %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
+                PRINT_ERROR("[CanPort%d] FDCAN fault: %d, rx_err: %d, tx_err: %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
             }
             else if (can_port_state.fault == FDCAN_STATUS_ERROR_WARNING)
             {
-                PRINT_INFO("CanPort[%d] flaut = %d, rx = %d, tx = %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
+                PRINT_INFO("[CanPort%d] FDCAN warning, fault: %d, rx_err: %d, tx_err: %d", can_port_id, can_port_state.fault, can_port_state.rx_err_num, can_port_state.tx_err_num);
             }
 
             switch (prot_rdata.head.s.cmd)
