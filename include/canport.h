@@ -17,19 +17,21 @@
 
 typedef struct 
 {
-    uint8_t mode;
-    uint8_t fault;
+    uint8_t mode;           // 电机模式
+    uint8_t fault;          // 电机错误码，0为正常状态，非零为异常状态
 
-    float position;
-    float velocity;
-    float torque;
+    float position;         // 电机位置，默认弧度
+    float velocity;         // 电机速度，默认弧度
+    float torque;           // 电机力矩
 
-    uint32_t num;
-    std::chrono::steady_clock::time_point time;
+    uint32_t num;           // 每次更新电机状态时 +1
+    std::chrono::steady_clock::time_point time; // 记录上次电机状态更新时的时间
 
-    version_s fw_version;
-    std::string model;
-    uint8_t flag;
+    version_s fw_version;   // 电机软件版本号，初始化时自动获取
+    std::string model;      // 电机型号，初始化时自动获取
+    std::string name;       // 自定义命名，比如关节名
+
+    uint8_t flag;           // 标志位，目前只在电机重置零位时有用，用户无需关心
 } motor_state_t;
 
 
@@ -39,7 +41,8 @@ public:
     fdcan_state_s can_port_state;
     std::map<int, motor_state_t> map_motors_state;
 
-    CanPort(uint8_t _can_port_id, std::string _ser_name, const RobotParams robot_params);
+    CanPort(uint8_t _can_port_id, const RobotParams robot_params);
+    CanPort(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name);
     CanPort(uint8_t _can_port_id, std::initializer_list<int> id_list);
     ~CanPort();
 
@@ -91,6 +94,8 @@ private:
 
     uint8_t comm_init_flag = 0;
     uint8_t set_cache_num_flag = 0;
+
+    void init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name);
     
     std::vector<std::string> get_ser_list(std::string serial_full_prefix);
     void ser_init(std::string port_name);

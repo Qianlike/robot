@@ -9,34 +9,53 @@
 
 static std::vector<std::string> ser_list{};
 
-CanPort::CanPort(uint8_t _can_port_id, std::string _ser_name, const RobotParams robot_params)
+CanPort::CanPort(uint8_t _can_port_id, const RobotParams robot_params)
 {
-    PRINT_INFO_G("FDCAN_PASS version: %d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
-    can_port_id = _can_port_id;
-
-    ser_init(_ser_name);
-    get_comm_version();
-    if (comm_version.data32 < VER_COMBINE(6, 0, 0))
+    std::map<uint8_t, std::string> map_id_name;
+    for (int id = 1; id <= robot_params.can_ports[_can_port_id - 1].motor_num; id++)
     {
-        PRINT_ERROR("The communication board version is too low!!!");
-        exit(1);
+        map_id_name.insert({static_cast<uint8_t>(id), ""});
     }
 
-    const int motor_num = robot_params.can_ports[can_port_id - 1].motor_num;
-    if (motor_num < 1 || motor_num > 30)
-    {
-        PRINT_ERROR("CanPort%d motor_num err!! got %d, valid range [1, 30]",
-                    can_port_id, motor_num);
-        exit(1);
-    }
-
-    comm_init();
-    set_cache_num(static_cast<uint8_t>(motor_num));
+    init(_can_port_id, map_id_name);
 }
 
 
-CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> _id_list)
+CanPort::CanPort(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
 {
+    init(_can_port_id, map_id_name);
+}
+
+
+CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> id_list)
+{
+    std::map<uint8_t, std::string> map_id_name;
+
+    for (int id : id_list)
+    {
+        map_id_name.insert({static_cast<uint8_t>(id), ""});
+    }
+
+    init(_can_port_id, map_id_name);
+}
+
+
+CanPort::~CanPort()
+{
+    PRINT_INFO_G("CanPort%d close", can_port_id);
+    ser_dev.close();
+
+    if (ser_recv_thread.joinable())
+    {
+        ser_recv_thread.join();
+    }
+}
+
+
+void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
+{
+    PRINT_INFO_G("FDCAN_PASS version: %d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
+
     if (_can_port_id < 1)
     {
         PRINT_ERROR("_can_port_id err!! got %d, must be >= 1", _can_port_id);
@@ -44,24 +63,28 @@ CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> _id_list)
     }
     can_port_id = _can_port_id;
 
-    if (_id_list.size() == 0)
+    const size_t id_num = map_id_name.size();
+    if (id_num < 1 || id_num > 30)
     {
-        PRINT_ERROR("_id_list err!! id list is empty");
+        PRINT_ERROR("map_id_name err!! got %zu, valid range [1, 30]", id_num);
         exit(1);
     }
 
-    for (auto id : _id_list)
+    for (const auto& it : map_id_name)
     {
+        const uint8_t id = it.first;
         if (id < 1 || id > 30)
         {
-            PRINT_ERROR("_id_list err!! got %d, valid range [1, 30]", id);
+            PRINT_ERROR("map_id_name err!! got %d, valid range [1, 30]", id);
             exit(1);
         }
         if (id_max < id)
         {
             id_max = id;
         }
-        map_motors_state.insert({id, {}});
+        motor_state_t state = {};
+        state.name = it.second;
+        map_motors_state.emplace(id, state);
     }
 
     if (ser_list.size() == 0)
@@ -98,17 +121,6 @@ CanPort::CanPort(uint8_t _can_port_id, std::initializer_list<int> _id_list)
     request_motor_state();
 
     PRINT_INFO_G("CanPort%d init ok\n", can_port_id);
-}
-
-CanPort::~CanPort()
-{
-    PRINT_INFO_G("CanPort%d close", can_port_id);
-    ser_dev.close();
-
-    if (ser_recv_thread.joinable())
-    {
-        ser_recv_thread.join();
-    }
 }
 
 
@@ -516,7 +528,7 @@ void CanPort::request_pos_reset()
 
 void CanPort::check_motor_pos_reset()
 {
-    std::vector<uint8_t> failed_id_list;
+    std::vector<uint8_t> failedid_list;
 
     for (auto it : map_motors_state)
     {
@@ -528,17 +540,17 @@ void CanPort::check_motor_pos_reset()
         request_pos_reset();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        failed_id_list.clear();
+        failedid_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.flag == 0)
             {
-                failed_id_list.push_back(it.first);
+                failedid_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failed_id_list.size());
-        if (failed_id_list.size() == 0)
+        printf("size = %ld\n", failedid_list.size());
+        if (failedid_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
@@ -551,7 +563,7 @@ void CanPort::check_motor_pos_reset()
     }
 
     PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failed_id_list)
+    for (auto it: failedid_list)
     {
         PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
@@ -560,24 +572,24 @@ void CanPort::check_motor_pos_reset()
 
 void CanPort::check_motor_version()
 {
-    std::vector<uint8_t> failed_id_list;
+    std::vector<uint8_t> failedid_list;
 
     for (int i = 0; i < 100; i++)
     {
         request_motor_version();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        failed_id_list.clear();
+        failedid_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.fw_version.data32 == 0)
             {
-                failed_id_list.push_back(it.first);
+                failedid_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failed_id_list.size());
-        if (failed_id_list.size() == 0)
+        printf("size = %ld\n", failedid_list.size());
+        if (failedid_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
@@ -589,7 +601,7 @@ void CanPort::check_motor_version()
     }
 
     PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failed_id_list)
+    for (auto it: failedid_list)
     {
         PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
@@ -605,24 +617,24 @@ void CanPort::request_motor_model()
 
 void CanPort::check_motor_model()
 {
-    std::vector<uint8_t> failed_id_list;
+    std::vector<uint8_t> failedid_list;
 
     for (int i = 0; i < 100; i++)
     {
         request_motor_model();
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-        failed_id_list.clear();
+        failedid_list.clear();
         for (auto it : map_motors_state)
         {
             if (it.second.model.size() == 0)
             {
-                failed_id_list.push_back(it.first);
+                failedid_list.push_back(it.first);
             }
         }
 
-        printf("size = %ld\n", failed_id_list.size());
-        if (failed_id_list.size() == 0)
+        printf("size = %ld\n", failedid_list.size());
+        if (failedid_list.size() == 0)
         {
             for (auto it : map_motors_state)
             {
@@ -634,7 +646,7 @@ void CanPort::check_motor_model()
     }
 
     PRINT_ERROR("CanPort%d error", can_port_id);
-    for (auto it: failed_id_list)
+    for (auto it: failedid_list)
     {
         PRINT_ERROR("CanPort%d motor%d", can_port_id, it);
     }
@@ -646,7 +658,8 @@ motor_state_t *CanPort::get_motor_state(uint8_t id)
     auto it = map_motors_state.find(id);
     if (it == map_motors_state.end())
     {
-        nullptr;
+        PRINT_ERROR("CanPort%d motor%d not found", can_port_id, id);
+        return nullptr;
     }
 
     return &(it->second);
