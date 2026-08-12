@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.5...3.30)
 project(hightorque_fdcan)
 
-# ==================== 基础设置 ====================
-# set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_EXTENSIONS OFF)
-
-# 生成 compile_commands.json（方便 IDE / clangd）
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==================== 禁用 yaml-cpp 多余功能 ====================
@@ -14,7 +8,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "Disable yaml-cpp tools" FORCE)
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "Disable yaml-cpp contrib" FORCE)
-# 推荐使用静态库（嵌入方便，避免运行时找不到 .so）
 set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "Build yaml-cpp as static library" FORCE)
 
 # ==================== 添加子目录 ====================
@@ -31,31 +24,44 @@ set(SOURCE_FILES
     src/parse_robot_params.cpp
 )
 
+# ==================== 静态库 ====================
+# 外部项目（如 ROS 包）add_subdirectory 引入本目录后，
+# 只需 target_link_libraries(... hightorque_robot) 即可（include 与依赖通过 PUBLIC 传递）
+add_library(hightorque_robot STATIC ${SOURCE_FILES})
+
+target_include_directories(hightorque_robot PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include
+)
+
+find_package(Threads REQUIRED)
+
+target_link_libraries(hightorque_robot PUBLIC
+    serial
+    yaml-cpp
+    Threads::Threads
+)
+
 # ==================== 可执行文件 ====================
+# 被外部项目（如 ROS 包）add_subdirectory 引入时可设 OFF，跳过 demo 构建
+option(HIGHTORQUE_BUILD_DEMO "Build demo executables" ON)
+
 set(DEMO_FILES
     example/demo1.cpp
     example/demo2.cpp
 )
 
-find_package(Threads REQUIRED)
+if(HIGHTORQUE_BUILD_DEMO)
+    foreach(demo_file ${DEMO_FILES})
+        get_filename_component(demo_name ${demo_file} NAME_WE)
 
-foreach(demo_file ${DEMO_FILES})
-    get_filename_component(demo_name ${demo_file} NAME_WE)
+        add_executable(${demo_name}
+            ${demo_file}
+        )
 
-    add_executable(${demo_name}
-        ${SOURCE_FILES}
-        ${demo_file}
-    )
-
-    target_include_directories(${demo_name} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include
-    )
-
-    target_link_libraries(${demo_name} PRIVATE
-        serial
-        yaml-cpp
-        Threads::Threads
-    )
-endforeach()
+        target_link_libraries(${demo_name} PRIVATE
+            hightorque_robot
+        )
+    endforeach()
+endif()
 
