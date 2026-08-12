@@ -1,0 +1,45 @@
+[build-system]
+# 注意：不要写 scikit-build-core[pyproject] —— 1.0 起已删除该 extra
+# scikit-build-core 会自动注入 cmake，无需显式声明
+# pybind11 3.0 重新设计了 abi3 机制（不再支持手动 Py_LIMITED_API），
+# 因此 pin <3.0；2.13.6 起支持 Python 3.14
+requires = ["scikit-build-core>=0.11", "pybind11>=2.13.6,<3.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "hightorque-robot"
+# 与 include/version.h 的 HIGHTORQUE_FDCAN_VERSION = VER_COMBINE(6, 0, 0) 同步
+version = "6.0.0"
+description = "Python bindings for the hightorque_fdcan high-torque motor SDK (Linux, FDCAN over serial)"
+requires-python = ">=3.8"
+keywords = ["fdcan", "motor", "robot", "can", "serial", "actuator"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Software Development :: Embedded Systems",
+]
+dependencies = []
+
+[tool.scikit-build]
+minimum-version = "0.11"
+build-dir = "build/{wheel_tag}"
+
+[tool.scikit-build.wheel]
+# 纯 Python 包整目录拷入 wheel（含 robot_param/*.yaml 数据文件）
+packages = ["hightorque_robot"]
+
+[tool.cibuildwheel]
+# 按 Python 版本分别构建 wheel（cp38~cp314 共 7 个，pip 自动选择匹配版本）
+# 说明：不用 abi3 单包 —— pybind11 从未真正支持 Py_LIMITED_API 编译
+# （pybind/pybind11#1755），abi3 方案在 pybind11 下不可行
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
+archs = ["x86_64"]  # ARM(aarch64)：CI 原生 ARM runner 用 CIBW_ARCHS=aarch64 覆盖（见 tools/ci-wheel.yml）
+test-requires = ["pytest"]
+test-command = "pytest {project}/tests -v"

@@ -24,6 +24,8 @@ public:
 
     motor_state_t *get_motor_state();
 
+    uint8_t get_id() const { return id; }
+
 private:
     CanPort *can_port = nullptr;    // 所属 canport，非拥有
     uint8_t id = 0;                 // 电机在 canport 上的 id

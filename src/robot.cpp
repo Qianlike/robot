@@ -5,8 +5,18 @@
 
 Robot::Robot()
 {
-    const RobotParams robot_params = parse_robot_params();
+    init(parse_robot_params());
+}
 
+
+Robot::Robot(const std::string& config_path)
+{
+    init(parse_robot_params(config_path));
+}
+
+
+void Robot::init(const RobotParams& robot_params)
+{
     for (uint8_t i = 0; i < robot_params.can_port_num; i++)
     {
         const auto& port_params = robot_params.can_ports[i];

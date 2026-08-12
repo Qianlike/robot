@@ -29,6 +29,7 @@ struct RobotParams
 
 
 RobotParams parse_robot_params(void);
+RobotParams parse_robot_params(const std::string& config_path);
 
 
 #endif

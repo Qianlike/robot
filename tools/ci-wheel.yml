@@ -1,0 +1,95 @@
+# hightorque-robot wheel 构建（GitHub Actions 模板）
+#
+# 使用方式：把本文件复制到仓库根 .github/workflows/build-wheels.yml。
+#
+# 产物：
+#   - x86_64：cp38~cp314 各一个 manylinux wheel
+#   - aarch64（ARM64）：cp38~cp314 各一个 manylinux wheel（原生 ARM runner，无需 QEMU）
+#
+# 说明：
+#   - cibuildwheel 4.x 移除了 cp38 构建目标，本模板 pin @v3
+#   - ubuntu-24.04-arm 是 GitHub 的原生 ARM64 runner；若仓库所在组织无 ARM
+#     runner 配额，可改用 ubuntu-latest + CIBW_ARCHS 含 aarch64（自动走 QEMU
+#     模拟，约慢 5~10 倍）——把 build-aarch64 的 runs-on 改回 ubuntu-latest 即可
+name: build-wheels
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # cibuildwheel 3.x 要求 host Python >= 3.11（与目标 Python 版本无关）
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # cibuildwheel 容器只包含项目目录，先把核心源码 stage 进去
+      - name: Stage core sources
+        run: |
+          rsync -a --delete \
+            --exclude .git --exclude build --exclude tools \
+            ./ tools/python/core/
+
+      - name: Build x86_64 wheels
+        uses: pypa/cibuildwheel@v3
+        env:
+          CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*
+          CIBW_ARCHS: x86_64
+        with:
+          package-dir: tools/python
+          output-dir: wheelhouse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-x86_64
+          path: wheelhouse/*.whl
+
+  build-aarch64:
+    # ARM64：原生 ARM runner（推荐，无需 QEMU）。
+    # 备选：runs-on: ubuntu-latest + CIBW_ARCHS: aarch64（QEMU 模拟，慢）
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Stage core sources
+        run: |
+          rsync -a --delete \
+            --exclude .git --exclude build --exclude tools \
+            ./ tools/python/core/
+
+      - name: Build aarch64 wheels
+        uses: pypa/cibuildwheel@v3
+        env:
+          CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*
+          CIBW_ARCHS: aarch64
+        with:
+          package-dir: tools/python
+          output-dir: wheelhouse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-aarch64
+          path: wheelhouse/*.whl
+
+  # 可选：发布到 PyPI（配合 tags: ["v*"]）
+  # publish:
+  #   needs: [build-x86_64, build-aarch64]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with: { pattern: "wheels-*", path: wheelhouse, merge-multiple: true }
+  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         packages-dir: wheelhouse
