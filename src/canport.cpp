@@ -71,6 +71,7 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
             id_max = id;
         }
         motor_state_t state = {};
+        state.position = 999.0f;
         state.name = it.second;
         map_motors_state.emplace(id, state);
     }
@@ -81,7 +82,7 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
         ser_list = get_ser_list(ser_prefix);
         if (ser_list.size() < 1)
         {
-            PRINT_ERROR("no serial port found, prefix: %S", ser_prefix.c_str());
+            PRINT_ERROR("no serial port found, prefix: %s", ser_prefix.c_str());
             exit(1);
         }
     }
@@ -694,7 +695,19 @@ void CanPort::recv()
         prot_rdata.head.s.len = 0;
         try
         {  
-            ser_dev.read(&prot_rdata.head.raw[0], 1);
+            if (ser_dev.read(&prot_rdata.head.raw[0], 1) == 0)
+            {
+                const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
+                for (auto &it : map_motors_state)
+                {
+                    if (time - it.second.time >= std::chrono::milliseconds(200))
+                    {
+                        it.second.position = 999.0f;
+                        it.second.time = time;
+                    }
+                }
+            }
+
             if (prot_rdata.head.s.head != PROT_HEAD)
             {
                 continue;
