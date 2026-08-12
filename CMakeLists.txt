@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5...3.30)
 project(hightorque_fdcan)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # ==================== 禁用 yaml-cpp 多余功能 ====================
 # 加快编译，避免生成测试和工具
