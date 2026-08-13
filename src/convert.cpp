@@ -1,19 +1,21 @@
 #include "convert.h"
+#include <cmath>
 #include <cstdlib>
 #include <string>
 
 
 static int16_t int16_limit(const int32_t data, const std::string &str)
 {
-    if (data >= 32760)
+    if (data >= 32765)
     {
         PRINT_ERROR("%s: data=%d out of range [-32760, 32760], clamped", str.c_str(), data);
-        return static_cast<int16_t>(32760);
+        return static_cast<int16_t>(32765);
     }
-    else if (data <= -32760)
+
+    if (data <= -32765)
     {
         PRINT_ERROR("%s: data=%d out of range [-32760, 32760], clamped", str.c_str(), data);
-        return static_cast<int16_t>(-32760);
+        return static_cast<int16_t>(-32765);
     }
 
     return static_cast<int16_t>(data);
@@ -56,8 +58,8 @@ static float turns_to_conv(const float in_data, const angle_unit_t type)
 
 int16_t pos_float2int(float data)
 {
-    data = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
-    return int16_limit(static_cast<int32_t>(data * POS_SCALE), "pos");
+    const float turns = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return int16_limit(turns * POS_SCALE, "pos");
 }
 
 float pos_int2float(int16_t data)
@@ -69,8 +71,8 @@ float pos_int2float(int16_t data)
 
 int16_t vel_float2int(float data)
 {
-    data = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
-    return int16_limit(static_cast<int32_t>(data * VEL_SCALE), "vel");
+    const float turns = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return int16_limit(turns * VEL_SCALE, "vel");
 }
 
 float vel_int2float(int16_t data)
@@ -82,29 +84,28 @@ float vel_int2float(int16_t data)
 
 int16_t tqe_float2int(float data)
 {
-    data = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
-    return int16_limit(static_cast<int32_t>(data * TQE_SCALE), "tqe");
+    return int16_limit(data * TQE_SCALE, "tqe");
 }
 
 float tqe_int2float(int16_t data)
 {
-    const float turns = static_cast<float>(data) / TQE_SCALE;
-    return turns_to_conv(turns, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return static_cast<float>(data) / TQE_SCALE;
 }
 
 int16_t acc_float2int(float data)
 {
-    data = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
-    return int16_limit(static_cast<int32_t>(data * ACC_SCALE), "acc");
+    const float turns = conv_to_turns(data, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return int16_limit(turns * ACC_SCALE, "acc");
 }
 
 int16_t kp_float2int(float data)
 {
-    return int16_limit(static_cast<int32_t>(data * PID_SCALE), "kp");
+    const float turns = turns_to_conv(data, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return int16_limit(turns * PID_SCALE, "kp");
 }
 
 int16_t kd_float2int(float data)
 {
-    return int16_limit(static_cast<int32_t>(data * PID_SCALE), "kd");
+    const float turns = turns_to_conv(data, static_cast<angle_unit_t>(ANGLE_UNIT));
+    return int16_limit(turns * PID_SCALE, "kd");
 }
-
