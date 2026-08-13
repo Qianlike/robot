@@ -5,6 +5,7 @@
 
 #include "canport.h"
 #include "motor.h"
+#include "parse_robot_params.h"
 
 #include <memory>
 
@@ -14,7 +15,11 @@ class Robot
 {
 public:
     Robot();
+    Robot(const std::string& config_path);
     ~Robot();
+
+    Robot(const Robot&) = delete;
+    Robot& operator=(const Robot&) = delete;
 
     
     
@@ -47,6 +52,7 @@ public:
 
 private:
     CanPort *get_can_port(uint8_t can_port_id);
+    void init(const RobotParams& params);
 };
 
 

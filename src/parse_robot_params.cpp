@@ -115,12 +115,33 @@ void readConfigParamOptional(const YAML::Node &node,
         value = default_value;
     }
 }
+std::string get_dirname(const std::string &path)
+{
+    const size_t pos = path.find_last_of('/');
+    if (pos == std::string::npos)
+    {
+        return "";
+    }
+    return path.substr(0, pos);
+}
 } // namespace
 
 RobotParams parse_robot_params()
 {
-    auto param_file =
-        YAML::LoadFile("../robot_param/robot_config.yaml")["param_file"].as<std::string>();
+    return parse_robot_params("../robot_param/robot_config.yaml");
+}
+
+RobotParams parse_robot_params(const std::string &config_path)
+{
+    const std::string config_dir = get_dirname(config_path);
+
+    std::string param_file = YAML::LoadFile(config_path)["param_file"].as<std::string>();
+    // param_file 为相对路径时，相对 config 文件所在目录解析（原实现相对 CWD；
+    // 对默认路径 ../robot_param/robot_config.yaml 二者归一化后结果一致）
+    if (!param_file.empty() && param_file[0] != '/' && !config_dir.empty())
+    {
+        param_file = config_dir + "/" + param_file;
+    }
     PRINT_INFO("param file: %s", param_file.c_str());
 
     auto config = YAML::LoadFile(param_file.c_str());

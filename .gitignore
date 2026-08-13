@@ -1,3 +1,9 @@
 build/*
 .vscode/*
 .claude/*
+tools/python/build/*
+tools/python/core/*
+tools/python/dist/*
+tools/dist/*
+tools/.cibw-venv/*
+*.pyc
