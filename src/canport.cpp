@@ -6,8 +6,18 @@
 #include <string>
 
 
+// #define  CANPORT_LOG_PATH "./log"
+#ifdef CANPORT_LOG_PATH
+#include <mutex>
+
+static std::mutex canport_log_mutex[256];
+static FILE *canport_log_file[256] = {};
+#endif
+
 
 static std::vector<std::string> ser_list{};
+
+
 
 CanPort::CanPort(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
 {
@@ -37,6 +47,15 @@ CanPort::~CanPort()
     {
         ser_recv_thread.join();
     }
+
+#ifdef CANPORT_LOG_PATH
+    std::lock_guard<std::mutex> lock(canport_log_mutex[can_port_id]);
+    if (canport_log_file[can_port_id] != nullptr)
+    {
+        std::fclose(canport_log_file[can_port_id]);
+        canport_log_file[can_port_id] = nullptr;
+    }
+#endif
 }
 
 
@@ -50,6 +69,24 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
         exit(1);
     }
     can_port_id = _can_port_id;
+
+#ifdef CANPORT_LOG_PATH
+    {
+        std::string canport_log_file_path = CANPORT_LOG_PATH;
+        if (!canport_log_file_path.empty() && canport_log_file_path.back() != '/')
+        {
+            canport_log_file_path += '/';
+        }
+        canport_log_file_path += "canport_" + std::to_string(can_port_id) + ".log";
+
+        std::lock_guard<std::mutex> lock(canport_log_mutex[can_port_id]);
+        canport_log_file[can_port_id] = std::fopen(canport_log_file_path.c_str(), "a");
+        if (canport_log_file[can_port_id] == nullptr)
+        {
+            PRINT_ERROR("[CanPort%d] log file open err: %s", can_port_id, canport_log_file_path.c_str());
+        }
+    }
+#endif
 
     const size_t id_num = map_id_name.size();
     if (id_num < 1 || id_num > 30)
@@ -673,6 +710,23 @@ void CanPort::send()
     printf("\n\n");
     #endif
 
+#ifdef CANPORT_LOG_PATH
+    {
+        std::lock_guard<std::mutex> lock(canport_log_mutex[can_port_id]);
+        if (canport_log_file[can_port_id] != nullptr)
+        {
+            uint8_t *byte_ptr = (uint8_t *)&prot_tdata.head.s.head;
+            std::fprintf(canport_log_file[can_port_id], "[CanPort%d] tx:", can_port_id);
+            for (size_t i = 0; i < prot_tdata.head.s.len + sizeof(prot_head_s); i++)
+            {
+                std::fprintf(canport_log_file[can_port_id], " 0x%.2X", byte_ptr[i]);
+            }
+            std::fprintf(canport_log_file[can_port_id], "\n");
+            std::fflush(canport_log_file[can_port_id]);
+        }
+    }
+#endif
+
     try
     {
         if(ser_dev.isOpen())
@@ -736,6 +790,23 @@ void CanPort::recv()
                 printf("0x%02X ", prot_rdata.data.raw[i]);
             }
             printf("\n");
+            #endif
+
+            #ifdef CANPORT_LOG_PATH
+            {
+                std::lock_guard<std::mutex> lock(canport_log_mutex[can_port_id]);
+                if (canport_log_file[can_port_id] != nullptr)
+                {
+                    uint8_t *byte_ptr = (uint8_t *)&prot_rdata.head.s.head;
+                    std::fprintf(canport_log_file[can_port_id], "[CanPort%d] rx:", can_port_id);
+                    for (size_t i = 0; i < prot_rdata.head.s.len + sizeof(prot_head_s); i++)
+                    {
+                        std::fprintf(canport_log_file[can_port_id], " 0x%.2X", byte_ptr[i]);
+                    }
+                    std::fprintf(canport_log_file[can_port_id], "\n");
+                    std::fflush(canport_log_file[can_port_id]);
+                }
+            }
             #endif
 
             can_port_state = prot_rdata.data.s.fdcan_state;
@@ -825,4 +896,3 @@ void CanPort::recv()
         }
     }
 }
-
