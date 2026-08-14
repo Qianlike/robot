@@ -94,7 +94,7 @@ private:
 
     void init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name);
     
-    std::vector<std::string> get_ser_list(std::string serial_full_prefix);
+    std::vector<std::string> get_ser_list();
     void ser_init(std::string port_name);
     void port_tdata_clean(const uint8_t mode, const uint16_t len);
     void comm_init(void);

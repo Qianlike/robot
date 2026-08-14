@@ -3,6 +3,7 @@
 #include "convert.h"
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 
 
@@ -115,11 +116,10 @@ void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& m
 
     if (ser_list.size() == 0)
     {
-        const std::string ser_prefix = "/dev/ttyACM";
-        ser_list = get_ser_list(ser_prefix);
+        ser_list = get_ser_list();
         if (ser_list.size() < 1)
         {
-            PRINT_ERROR("no serial port found, prefix: %s", ser_prefix.c_str());
+            PRINT_ERROR("no comm board serial ports found (VID:PID=CAF1:FFFF)");
             exit(1);
         }
     }
@@ -163,63 +163,51 @@ void CanPort::port_tdata_clean(const uint8_t mode, const uint16_t len)
 }
 
 
-std::vector<std::string> CanPort::get_ser_list(std::string serial_full_prefix)
+std::vector<std::string> CanPort::get_ser_list()
 {
     std::vector<serial::PortInfo> all_ports = serial::list_ports();
-    std::vector<std::string> com_board_ports;
+    std::vector<serial::PortInfo> com_board_ports;
 
     for (const auto& port_info : all_ports)
     {
-        if (port_info.port.find(serial_full_prefix) == std::string::npos)
-        {
-            continue;
-        }
-
         std::string hw = port_info.hardware_id;
-        auto pos = hw.find("VID:PID=");
-        if (pos == std::string::npos)
-        {
-            continue;
-        }
+        std::transform(hw.begin(), hw.end(), hw.begin(),
+            [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 
-        std::string vid_pid = hw.substr(pos + 8);
-        auto colon = vid_pid.find(':');
-        if (colon == std::string::npos)
-        {
-            continue;
-        }
+        const bool linux_id = hw.find("VID:PID=CAF1:FFFF") != std::string::npos;
+        const bool windows_id = hw.find("VID_CAF1") != std::string::npos &&
+                                hw.find("PID_FFFF") != std::string::npos;
 
-        std::string vid = vid_pid.substr(0, colon);
-        std::string pid_part = vid_pid.substr(colon + 1);
-        auto space = pid_part.find(' ');
-        if (space != std::string::npos)
+        if (linux_id || windows_id)
         {
-            pid_part = pid_part.substr(0, space);
-        }
-        std::string pid = pid_part;
-
-        std::transform(vid.begin(), vid.end(), vid.begin(), ::toupper);
-        std::transform(pid.begin(), pid.end(), pid.begin(), ::toupper);
-        if (vid == "CAF1" && pid == "FFFF")
-        {
-            
-            com_board_ports.push_back(port_info.port);
+            com_board_ports.push_back(port_info);
         }
     }
 
-    if (com_board_ports.empty())
-    {
-        PRINT_ERROR("no serial port found, prefix: %s", serial_full_prefix.c_str());
-        exit(1);
-    }
+#ifdef _WIN32
+    std::sort(com_board_ports.begin(), com_board_ports.end(),
+        [](const serial::PortInfo& left, const serial::PortInfo& right)
+        {
+            return left.hardware_id < right.hardware_id;
+        });
+#endif
 
     PRINT_INFO("detected %zu serial port(s):", com_board_ports.size());
     for (size_t i = 0; i < com_board_ports.size(); i++)
     {
-        PRINT_INFO("  [%zu] %s", i, com_board_ports[i].c_str());
+        PRINT_INFO("  [%zu] %s -> %s", i + 1,
+            com_board_ports[i].hardware_id.c_str(),
+            com_board_ports[i].port.c_str());
     }
 
-    return com_board_ports;
+    std::vector<std::string> port_names;
+    port_names.reserve(com_board_ports.size());
+    for (const auto& port_info : com_board_ports)
+    {
+        port_names.push_back(port_info.port);
+    }
+
+    return port_names;
 }
 
 
