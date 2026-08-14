@@ -6,4 +6,5 @@ tools/python/core/*
 tools/python/dist/*
 tools/dist/*
 tools/.cibw-venv/*
+tools/.cibw-venv-windows/*
 *.pyc

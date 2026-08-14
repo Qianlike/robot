@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.16...3.30)
 project(hightorque_robot_python LANGUAGES CXX)
 
+# include/canport.h 使用了 C++20 指定初始化器；GNU 编译器在旧标准下将其
+# 作为扩展接受，MSVC 则需要显式启用 C++20。
+if(MSVC)
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 # 不构建根工程的 demo 可执行文件
 set(HIGHTORQUE_BUILD_DEMO OFF CACHE BOOL "" FORCE)
 
@@ -27,9 +34,18 @@ pybind11_add_module(_core src/python_bindings.cpp)
 target_link_libraries(_core PRIVATE hightorque_robot)
 target_compile_features(_core PRIVATE cxx_std_17)
 
+# Python 3.8+ 在 Windows 上不再默认从 PATH 搜索扩展模块的依赖 DLL。
+# MinGW 本地构建时静态链接 GCC/C++/winpthread 运行库，使 wheel 不依赖
+# 编译器安装目录；MSVC/cibuildwheel 构建不受此分支影响。
+if(MINGW)
+    target_link_options(_core PRIVATE -static -static-libgcc -static-libstdc++)
+endif()
+
 # 把扩展装进 hightorque_robot 包内（默认会装到 site-packages 根，
 # 导致 from . import _core 找不到）
-install(TARGETS _core LIBRARY DESTINATION hightorque_robot)
+install(TARGETS _core
+        LIBRARY DESTINATION hightorque_robot
+        RUNTIME DESTINATION hightorque_robot)
 
 # 内置参数数据用 CMake install 打进 wheel（不依赖 wheel.packages 的文件过滤，
 # 该过滤在 scikit-build-core 1.x 下会漏掉 .yaml）。

@@ -18,54 +18,51 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <string>
+#include <vector>
 
 namespace py = pybind11;
 
 namespace
 {
-// 复刻 canport.cpp CanPort::get_ser_list 的过滤逻辑（VID:PID=CAF1:FFFF + /dev/ttyACM 前缀），
-// 只返回列表、不 exit，供 Python 层预检
+// 复刻 canport.cpp CanPort::get_ser_list 的跨平台 VID/PID 过滤和 Windows
+// hardware_id 排序逻辑，只返回列表、不 exit，供 Python 层预检。
 std::vector<std::string> detect_com_ports()
 {
-    std::vector<std::string> result;
+    std::vector<serial::PortInfo> com_board_ports;
 
     for (const auto& port_info : serial::list_ports())
     {
-        if (port_info.port.find("/dev/ttyACM") == std::string::npos)
-        {
-            continue;
-        }
-
         std::string hw = port_info.hardware_id;
-        const size_t pos = hw.find("VID:PID=");
-        if (pos == std::string::npos)
-        {
-            continue;
-        }
+        std::transform(hw.begin(), hw.end(), hw.begin(),
+            [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 
-        std::string vid_pid = hw.substr(pos + 8);
-        const size_t colon = vid_pid.find(':');
-        if (colon == std::string::npos)
-        {
-            continue;
-        }
+        const bool linux_id = hw.find("VID:PID=CAF1:FFFF") != std::string::npos;
+        const bool windows_id = hw.find("VID_CAF1") != std::string::npos &&
+                                hw.find("PID_FFFF") != std::string::npos;
 
-        std::string vid = vid_pid.substr(0, colon);
-        std::string pid_part = vid_pid.substr(colon + 1);
-        const size_t space = pid_part.find(' ');
-        if (space != std::string::npos)
+        if (linux_id || windows_id)
         {
-            pid_part = pid_part.substr(0, space);
+            com_board_ports.push_back(port_info);
         }
+    }
 
-        std::transform(vid.begin(), vid.end(), vid.begin(), ::toupper);
-        std::transform(pid_part.begin(), pid_part.end(), pid_part.begin(), ::toupper);
-        if (vid == "CAF1" && pid_part == "FFFF")
+#ifdef _WIN32
+    std::sort(com_board_ports.begin(), com_board_ports.end(),
+        [](const serial::PortInfo& left, const serial::PortInfo& right)
         {
-            result.push_back(port_info.port);
-        }
+            return left.hardware_id < right.hardware_id;
+        });
+#endif
+
+    std::vector<std::string> result;
+    result.reserve(com_board_ports.size());
+    for (const auto& port_info : com_board_ports)
+    {
+        result.push_back(port_info.port);
     }
 
     return result;
@@ -186,7 +183,7 @@ PYBIND11_MODULE(_core, m)
 
     // ==================== 硬件预检 ====================
     m.def("detect_com_ports", &detect_com_ports,
-          "检测通信板串口列表（/dev/ttyACM*，VID:PID=CAF1:FFFF）");
+          "按 VID:PID=CAF1:FFFF 检测 Linux/Windows 通信板串口列表");
 
     // ==================== 单位换算（convert.h） ====================
     m.def("pos_float2int", &pos_float2int, py::arg("data"));

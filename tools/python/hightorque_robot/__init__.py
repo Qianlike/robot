@@ -16,8 +16,8 @@
     5. wheel 内置的默认参数（Robot 构造后可通过 ``robot.params`` 查看）
 
 注意:
-    - 仅支持 Linux（串口驱动为 POSIX 实现）
-    - 构造 ``Robot``/``CanPort`` 需要通信板硬件（/dev/ttyACM*, VID:PID=CAF1:FFFF）；
+    - 支持 Linux 和 Windows 10；Windows 按 USB ``MI_xx`` 接口号映射 CAN 通道。
+    - 构造 ``Robot``/``CanPort`` 需要通信板硬件（VID:PID=CAF1:FFFF）；
       串口数量不足时会抛 ``RuntimeError``。端口存在但打开失败/握手超时等场景
       C++ 端会 ``exit()`` 直接终止进程（SDK 现状，暂未改造为异常）
 """
@@ -87,7 +87,10 @@ def parse_robot_params(config_path: Optional[Union[str, Path]] = None) -> RobotP
 
     仅读取文件、不触碰硬件，无硬件环境也可调用。
     """
-    return _parse_robot_params(str(resolve_config_path(config_path)))
+    # C++ 的 get_dirname() 以 '/' 分隔目录；Windows Path 默认输出反斜杠，
+    # 因此传入绑定前统一转成绝对 POSIX 风格路径。
+    resolved_path = resolve_config_path(config_path).resolve()
+    return _parse_robot_params(resolved_path.as_posix())
 
 
 class Robot(_core.Robot):
@@ -102,13 +105,13 @@ class Robot(_core.Robot):
     """
 
     def __init__(self, config_path: Optional[Union[str, Path]] = None):
-        self.config_path = str(resolve_config_path(config_path))
+        self.config_path = resolve_config_path(config_path).resolve().as_posix()
         self.params = _parse_robot_params(self.config_path)
 
         ports = detect_com_ports()
         if len(ports) < self.params.can_port_num:
             raise RuntimeError(
-                "需要 %d 个通信板串口 (/dev/ttyACM*, VID:PID=CAF1:FFFF)，"
+                "需要 %d 个通信板串口 (VID:PID=CAF1:FFFF)，"
                 "当前检测到 %d 个：%s" % (self.params.can_port_num, len(ports), ports or "无")
             )
 

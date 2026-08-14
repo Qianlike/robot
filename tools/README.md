@@ -9,28 +9,28 @@
 ```
 tools/
 ├── python/                  # pip 构建工程（scikit-build-core + pybind11）
-│   ├── pyproject.toml       # 构建配置（Python 3.8+ / Linux）
+│   ├── pyproject.toml       # 构建配置（Python 3.8+ / Linux / Windows）
 │   ├── CMakeLists.txt       # 绑定模块构建（core/ 双路回退）
 │   ├── src/python_bindings.cpp   # pybind11 绑定源码（模块 _core）
 │   ├── hightorque_robot/    # Python 包（仅 __init__.py，不含数据副本）
 │   ├── tests/               # 无硬件 pytest 测试
 │   └── core/                # 构建产物：rsync 的核心源码副本（勿提交）
 ├── build_wheels.sh          # 构建 x86_64/aarch64 wheel（Docker + cibuildwheel）
+├── build_wheels.ps1         # 构建 Windows AMD64 wheel（PowerShell + cibuildwheel）
 ├── build_arm_wheels.sh      # 交叉编译 aarch64 wheel（zig，无需 Docker/ARM 机器）
-├── ci-wheel.yml             # GitHub Actions 模板（复制到 .github/workflows/）
 └── dist/                    # 构建产物：wheel 文件（勿提交）
 ```
 
 ## 快速上手
 
-```bash
-# 本地安装（Ubuntu 20.04 等需先升级 pip 到 >=20.3 以支持 PEP 517）
-python3 -m pip install -U pip
-pip install -e tools/python
+```console
+# 本地安装（Linux/Windows；Ubuntu 20.04 等需先升级 pip 到 >=20.3）
+python -m pip install -U pip
+python -m pip install -e tools/python
 
 # 运行测试（全部无硬件）
-pip install pytest
-pytest tools/python/tests -v
+python -m pip install pytest
+python -m pytest tools/python/tests -v
 ```
 
 ## 构建 wheel
@@ -50,15 +50,36 @@ tools/build_arm_wheels.sh all
 tools/build_wheels.sh aarch64
 ```
 
+Windows 10（64 位）在 PowerShell 中构建：
+
+```powershell
+# 需要 Python 3.11+，以及 Visual Studio 2022 C++ Build Tools 或 MinGW-w64
+powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1
+
+# 仅构建当前需要的 Python 3.11 wheel，并明确使用 MinGW
+powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1 `
+  -Toolchain MinGW -Build "cp311-*"
+
+# 产物：tools/dist/hightorque_robot-6.0.0-cp3*-cp3*-win_amd64.whl
+```
+
+脚本会把核心源码暂存到 `tools/python/core/`，在独立虚拟环境中安装
+`cibuildwheel<4`，自动选择 MSVC 或 MinGW，并为 Python 3.8~3.14 构建
+`win_amd64` wheel。可用 `-Build "cp311-*"` 限定 Python 版本；若构建依赖
+已经安装，可传 `-SkipBootstrap` 跳过联网安装步骤。MinGW 构建会静态链接
+GCC、C++ 和 winpthread 运行库，目标机器无需额外安装 MinGW DLL。
+
 **Python 版本策略（分版本 wheel）**：为 **Python 3.8 ~ 3.14** 分别构建
 wheel（共 7 个，pip 安装时自动选择匹配版本，对用户透明）。
 不做 abi3 单包的原因：pybind11 从未真正支持 `Py_LIMITED_API` 编译
 （pybind/pybind11#1755，stable ABI 支持仍在其路线图讨论中），
 abi3 方案在 pybind11 下不可行。构建/CI 配置已按此固定。
 
-**平台**：仅 Linux（vendored serial 库是 POSIX 实现，硬编码编译 unix 版）。
-代码经检查**无任何 x86 特有代码**（无 SIMD/内联汇编/x86 头文件），
-协议结构本就是为 ARM 电机固件设计，ARM 天然兼容。
+**平台**：支持 Linux x86_64/aarch64 和 64 位 Windows 10。串口子库由 CMake
+按平台选择 POSIX 或 Windows 实现；Windows wheel 使用 SetupAPI 枚举串口，按
+`VID_CAF1/PID_FFFF` 筛选通信板，并依据完整 `hardware_id` 中的 `MI_xx`
+稳定映射 CAN0~CAN6。代码经检查**无任何 x86 特有代码**（无 SIMD、内联汇编
+或 x86 头文件），协议结构本就是为 ARM 电机固件设计，ARM 天然兼容。
 
 **ARM (aarch64) 支持**（已配置完成 + 实测验证）：
 - **本地交叉编译**（推荐）：`tools/build_arm_wheels.sh` —— 用 zig 交叉编译器
@@ -72,11 +93,8 @@ abi3 方案在 pybind11 下不可行。构建/CI 配置已按此固定。
   依赖：zig（`~/.local/bin/zig`，来源见下）+ 网络（南大 github-release 镜像
   下载 aarch64 Python，首次 ~85MB/版本，缓存于 `~/.cache/ht-arm-py/`）
 - 其他路径：
-  1. CI：`tools/ci-wheel.yml` 的 `build-aarch64` job（注意：仓库托管在私有
-     Git 服务器 git.clicki.cn，GitHub Actions 模板需适配 Gitea Actions /
-     runner 标签后再用）
-  2. `tools/build_wheels.sh aarch64`（Docker + QEMU）
-  3. 直接在一台 ARM Linux 机器（如 Jetson/RK3588）上 `pip install` 源码构建，
+  1. `tools/build_wheels.sh aarch64`（Docker + QEMU）
+  2. 直接在一台 ARM Linux 机器（如 Jetson/RK3588）上 `pip install` 源码构建，
      天然产出 aarch64 wheel
 - **zig 安装**（无 sudo）：`pip download ziglang -i https://pypi.tuna.tsinghua.edu.cn/simple`
   解压 wheel 后整个目录复制到 `~/.local/zig-0.16/` 并 `chmod +x`（zig 需配套
@@ -100,6 +118,7 @@ abi3 方案在 pybind11 下不可行。构建/CI 配置已按此固定。
 
 - 串口不足时 Python 层抛 `RuntimeError`；但端口存在而打开失败/握手超时等
   场景 C++ 端仍会 `exit()` 直接终止进程（SDK 现状，后续 v2 计划改为抛异常）
+- Windows wheel 仅构建 AMD64；暂不提供 win32 或 Windows ARM64 wheel
 - sdist 不支持（核心源码在打包工程之外），只发 wheel
 - **yaml 单一数据源**：wheel 内置参数数据不在此维护副本——构建时由 CMake
   从仓库根 `robot_param/` 复制进 wheel（原始 `robot_config.yaml` 的
