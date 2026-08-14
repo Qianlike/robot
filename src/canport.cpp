@@ -518,8 +518,12 @@ void CanPort::request_zero_pos_reset()
 
 void CanPort::motor_zero_pos_reset()
 {
-    std::vector<uint8_t> failed_id_list;
+    stop();
+    send();
+    send();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
+    std::vector<uint8_t> failed_id_list;
     for (auto it : map_motors_state)
     {
         it.second.flag = 0;

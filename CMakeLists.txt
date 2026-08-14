@@ -48,8 +48,14 @@ target_link_libraries(hightorque_robot PUBLIC
 option(HIGHTORQUE_BUILD_DEMO "Build demo executables" ON)
 
 set(DEMO_FILES
-    example/demo1.cpp
-    example/demo2.cpp
+    example/canport/canport_feedback.cpp
+    example/canport/canport_move_zero.cpp
+    example/canport/canport_run.cpp
+    example/canport/canport_set_zero.cpp
+    example/motors/motors_feedback.cpp
+    example/motors/motors_move_zero.cpp
+    example/motors/motors_run.cpp
+    example/motors/motors_set_zero.cpp
 )
 
 if(HIGHTORQUE_BUILD_DEMO)
@@ -65,4 +71,3 @@ if(HIGHTORQUE_BUILD_DEMO)
         )
     endforeach()
 endif()
-
