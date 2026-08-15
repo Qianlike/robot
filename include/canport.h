@@ -80,7 +80,7 @@ private:
     };
     version_s sdk_version   // SDK 版本号
     {
-        .data32 = HIGHTORQUE_FDCAN_VERSION,
+        .data32 = HIGHTORQUE_ROBOT_VERSION,
     };
     uint8_t can_port_id = 0;
 

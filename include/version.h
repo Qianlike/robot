@@ -11,9 +11,14 @@
 #define VER_GET_MINOR(version)              ((uint8_t)(((version) >> 8) & 0xFF))
 #define VER_GET_PATCH(version)              ((uint8_t)(((version) >> 0) & 0xFF))
 
+#define HIGHTORQUE_ROBOT_VERSION_MAJOR      6
+#define HIGHTORQUE_ROBOT_VERSION_MINOR      0
+#define HIGHTORQUE_ROBOT_VERSION_PATCH      0
 
-#define  HIGHTORQUE_FDCAN_VERSION  VER_COMBINE(6, 0, 0)  // 版本号
+#define HIGHTORQUE_ROBOT_VERSION \
+    VER_COMBINE(HIGHTORQUE_ROBOT_VERSION_MAJOR, \
+                HIGHTORQUE_ROBOT_VERSION_MINOR, \
+                HIGHTORQUE_ROBOT_VERSION_PATCH)  // 版本号
 
 
 #endif
-

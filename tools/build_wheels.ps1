@@ -116,7 +116,7 @@ if (-not $SkipBootstrap) {
     & $venvPython -m pip install --upgrade pip
     if ($LASTEXITCODE -ne 0) { throw "Failed to upgrade pip" }
 
-    $cibuildwheelSpec = if ($env:CIBW_VERSION_SPEC) { $env:CIBW_VERSION_SPEC } else { "cibuildwheel<4" }
+    $cibuildwheelSpec = if ($env:CIBW_VERSION_SPEC) { $env:CIBW_VERSION_SPEC } else { "cibuildwheel==3.4.1" }
     & $venvPython -m pip install --upgrade $cibuildwheelSpec
     if ($LASTEXITCODE -ne 0) { throw "Failed to install cibuildwheel" }
 }

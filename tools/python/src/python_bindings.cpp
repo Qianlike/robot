@@ -75,9 +75,9 @@ PYBIND11_MODULE(_core, m)
 
     // ==================== 版本 ====================
     m.attr("__version__") = py::str(
-        std::to_string(static_cast<int>(VER_GET_MAJOR(HIGHTORQUE_FDCAN_VERSION))) + "." +
-        std::to_string(static_cast<int>(VER_GET_MINOR(HIGHTORQUE_FDCAN_VERSION))) + "." +
-        std::to_string(static_cast<int>(VER_GET_PATCH(HIGHTORQUE_FDCAN_VERSION))));
+        std::to_string(static_cast<int>(VER_GET_MAJOR(HIGHTORQUE_ROBOT_VERSION))) + "." +
+        std::to_string(static_cast<int>(VER_GET_MINOR(HIGHTORQUE_ROBOT_VERSION))) + "." +
+        std::to_string(static_cast<int>(VER_GET_PATCH(HIGHTORQUE_ROBOT_VERSION))));
 
     // ==================== 版本号结构（version_s） ====================
     // 注意：major/minor/patch 与 data32 是同一联合体的别名，写入会互相覆盖

@@ -1,4 +1,6 @@
 """绑定层基础测试：结构体往返、常量、纯函数（不触碰硬件）。"""
+from importlib.metadata import version as package_version
+
 import pytest
 
 import hightorque_robot
@@ -11,6 +13,10 @@ def test_version_consistency():
     assert hightorque_robot.__version__.count(".") == 2
     parts = hightorque_robot.__version__.split(".")
     assert all(p.isdigit() for p in parts)
+
+
+def test_package_metadata_version_consistency():
+    assert package_version("hightorque-robot") == hightorque_robot.__version__
 
 
 def test_motor_state_defaults():

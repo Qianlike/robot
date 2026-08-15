@@ -11,8 +11,8 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "hightorque-robot"
-# 与 include/version.h 的 HIGHTORQUE_FDCAN_VERSION = VER_COMBINE(6, 0, 0) 同步
-version = "6.0.0"
+# 版本号从仓库根目录的 include/version.h 动态读取，避免与 C++ SDK 版本不同步。
+dynamic = ["version"]
 description = "Python bindings for the hightorque_fdcan high-torque motor SDK (Linux/Windows, FDCAN over serial)"
 requires-python = ">=3.8"
 keywords = ["fdcan", "motor", "robot", "can", "serial", "actuator"]
@@ -34,6 +34,12 @@ dependencies = []
 [tool.scikit-build]
 minimum-version = "0.10"
 build-dir = "build/{wheel_tag}"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "../../include/version.h"
+regex = 'HIGHTORQUE_ROBOT_VERSION_MAJOR\s+(\d+)[\s\S]*HIGHTORQUE_ROBOT_VERSION_MINOR\s+(\d+)[\s\S]*HIGHTORQUE_ROBOT_VERSION_PATCH\s+(\d+)'
+result = "{0}.{1}.{2}"
 
 [tool.scikit-build.wheel]
 # 纯 Python 包整目录拷入 wheel（含 robot_param/*.yaml 数据文件）

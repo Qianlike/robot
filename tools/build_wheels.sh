@@ -42,7 +42,7 @@ fi
 # shellcheck disable=SC1091
 source "${VENV_DIR}/bin/activate"
 
-CIBW_VERSION_SPEC="${CIBW_VERSION_SPEC:-cibuildwheel<4}"
+CIBW_VERSION_SPEC="${CIBW_VERSION_SPEC:-cibuildwheel==3.4.1}"
 
 if command -v uv >/dev/null 2>&1; then
     uv pip install -U pip --quiet
