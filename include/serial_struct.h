@@ -39,6 +39,21 @@
 
 #pragma pack(1)
 
+#if defined(_MSC_VER)
+typedef enum : uint8_t
+{
+    TINT16_NOHDR = 0,
+    TINT16,
+    TINT32,
+    TFLOAT,
+} data_type_t;
+
+
+typedef enum : uint8_t
+{
+    QUERY_MODE_FAULT_POS_VEL_TQE = 11,
+} prot_query_t;
+#else
 typedef enum __attribute__((packed))
 {
     TINT16_NOHDR = 0,
@@ -52,9 +67,20 @@ typedef enum __attribute__((packed))
 {
     QUERY_MODE_FAULT_POS_VEL_TQE = 11,
 } __attribute__((packed)) prot_query_t;
+#endif
 
 
 /* fdcan 相关 */
+#if defined(_MSC_VER)
+typedef enum : int8_t
+{
+    FDCAN_STATUS_UNKNOWN = -1,    // 状态无效
+    FDCAN_STATUS_OK,             // 正常
+    FDCAN_STATUS_ERROR_WARNING,  // 错误警告--位错误、CRC错误、ACK错误、格式错误（可自行恢复）
+    FDCAN_STATUS_ERROR_PASSIVE,  // 被动错误--表现：不在发送，但可接收
+    FDCAN_STATUS_BUS_OFF,        // 总线关闭--表现：不在发送或接收任何数据
+} fdcan_fault_t;
+#else
 typedef enum __attribute__((packed))
 {
     FDCAN_STATUS_UNKNOWN = -1,    // 状态无效
@@ -63,6 +89,7 @@ typedef enum __attribute__((packed))
     FDCAN_STATUS_ERROR_PASSIVE,  // 被动错误--表现：不在发送，但可接收
     FDCAN_STATUS_BUS_OFF,        // 总线关闭--表现：不在发送或接收任何数据
 } __attribute__((packed)) fdcan_fault_t;
+#endif
 
 
 typedef struct 

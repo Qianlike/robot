@@ -116,8 +116,8 @@ if (-not $SkipBootstrap) {
     & $venvPython -m pip install --upgrade pip
     if ($LASTEXITCODE -ne 0) { throw "Failed to upgrade pip" }
 
-    # cibuildwheel 3.x is the last release line that supports CPython 3.8.
-    & $venvPython -m pip install "cibuildwheel<4"
+    $cibuildwheelSpec = if ($env:CIBW_VERSION_SPEC) { $env:CIBW_VERSION_SPEC } else { "cibuildwheel<4" }
+    & $venvPython -m pip install --upgrade $cibuildwheelSpec
     if ($LASTEXITCODE -ne 0) { throw "Failed to install cibuildwheel" }
 }
 

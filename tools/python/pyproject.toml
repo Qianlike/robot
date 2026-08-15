@@ -3,7 +3,10 @@
 # scikit-build-core 会自动注入 cmake，无需显式声明
 # pybind11 3.0 重新设计了 abi3 机制（不再支持手动 Py_LIMITED_API），
 # 因此 pin <3.0；2.13.6 起支持 Python 3.14
-requires = ["scikit-build-core>=0.11", "pybind11>=2.13.6,<3.0"]
+requires = [
+    "scikit-build-core>=0.11",
+    "pybind11>=2.13.6,<3.0",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -29,7 +32,7 @@ classifiers = [
 dependencies = []
 
 [tool.scikit-build]
-minimum-version = "0.11"
+minimum-version = "0.10"
 build-dir = "build/{wheel_tag}"
 
 [tool.scikit-build.wheel]
@@ -42,7 +45,7 @@ packages = ["hightorque_robot"]
 # （pybind/pybind11#1755），abi3 方案在 pybind11 下不可行
 build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
 test-requires = ["pytest"]
-test-command = "pytest {project}/tests -v"
+test-command = "python -m pytest tests -v"
 
 [tool.cibuildwheel.linux]
 # ARM(aarch64) 构建可用 CIBW_ARCHS=aarch64 覆盖。

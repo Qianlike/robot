@@ -1,0 +1,165 @@
+name: Python wheels
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/github-python-build
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.arch }} wheels
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+    env:
+      CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+      CIBW_TEST_SKIP: "*"
+      CIBW_TEST_COMMAND: >-
+        python -c "import hightorque_robot, hightorque_robot._core; print(hightorque_robot.__version__)"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheels
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf tools/dist
+          {
+            echo "==> building cp38-cp313 wheels"
+            CIBW_BUILD="cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*" \
+            CIBW_VERSION_SPEC="cibuildwheel<4" \
+              tools/build_wheels.sh "${{ matrix.arch }}"
+
+            echo "==> building cp314 wheels"
+            CIBW_BUILD="cp314-*" \
+            CIBW_VERSION_SPEC="cibuildwheel>=4,<5" \
+              tools/build_wheels.sh "${{ matrix.arch }}"
+
+            echo "==> verifying expected wheel tags"
+            shopt -s nullglob
+            for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
+              matches=(tools/dist/*-"${tag}"-*.whl)
+              if [ "${#matches[@]}" -eq 0 ]; then
+                echo "error: missing ${tag} wheel" >&2
+                exit 1
+              fi
+              printf '  - %s: %s\n' "${tag}" "${matches[0]}"
+            done
+          } 2>&1 | tee build-linux.log
+
+      - name: Report build failure
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          tail="$(tail -100 build-linux.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+          echo "::error title=Linux wheel build failed::${tail}"
+          exit 1
+
+      - name: Upload wheels
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hightorque-robot-linux-${{ matrix.arch }}-cp38-cp314
+          path: tools/dist/*.whl
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hightorque-robot-linux-${{ matrix.arch }}-cp38-cp314-log
+          path: build-linux.log
+          if-no-files-found: ignore
+
+  windows-amd64:
+    name: Windows AMD64 wheels
+    runs-on: windows-2022
+    env:
+      CIBW_TEST_SKIP: "*"
+      CIBW_TEST_COMMAND: >-
+        python -c "import hightorque_robot, hightorque_robot._core; print(hightorque_robot.__version__)"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheels
+        id: build
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          Remove-Item -LiteralPath tools/dist -Recurse -Force -ErrorAction SilentlyContinue
+
+          $env:CIBW_BUILD = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+          $env:CIBW_VERSION_SPEC = "cibuildwheel<4"
+          powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1 2>&1 |
+            Tee-Object -FilePath build-windows.log
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+          $env:CIBW_BUILD = "cp314-*"
+          $env:CIBW_VERSION_SPEC = "cibuildwheel>=4,<5"
+          powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1 2>&1 |
+            Tee-Object -FilePath build-windows.log -Append
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "==> verifying expected wheel tags"
+          foreach ($tag in @("cp38", "cp39", "cp310", "cp311", "cp312", "cp313", "cp314")) {
+            $matches = @(Get-ChildItem -LiteralPath tools/dist -Filter "*-$tag-*.whl")
+            if ($matches.Count -eq 0) {
+              throw "Missing $tag wheel"
+            }
+            Write-Host "  - ${tag}: $($matches[0].Name)"
+          }
+
+      - name: Report build failure
+        if: steps.build.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $tail = (Get-Content -LiteralPath build-windows.log -Tail 100) -join "%0A"
+          $tail = $tail.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+          Write-Output "::error title=Windows wheel build failed::$tail"
+          exit 1
+
+      - name: Upload wheels
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hightorque-robot-windows-amd64-cp38-cp314
+          path: tools/dist/*.whl
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hightorque-robot-windows-amd64-cp38-cp314-log
+          path: build-windows.log
+          if-no-files-found: ignore
