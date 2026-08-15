@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - codex/github-python-build
+      - v6
 
 permissions:
   contents: read
