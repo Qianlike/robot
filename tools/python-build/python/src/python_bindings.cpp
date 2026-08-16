@@ -3,7 +3,7 @@
 // 设计约定：
 //   - get_motor_state()/get_can_port_state() 返回 C++ 裸指针（指向内部对象、可能为
 //     nullptr，且 recv 后台线程并发更新），一律按值拷贝为快照返回
-//   - parse_robot_params 只绑定带路径版本；无参版本会按 CWD 相对路径读取，
+//   - parse_robot_params 只绑定带路径版本；配置文件由 Python 调用方提供，
 //     且核心代码中 exit(-1)/exit(1) 会直接终止 Python 进程，故不暴露
 //   - detect_com_ports() 供 Python 层构造 Robot/CanPort 前预检硬件
 
@@ -277,7 +277,7 @@ PYBIND11_MODULE(_core, m)
     // ==================== Robot ====================
     py::class_<Robot>(m, "Robot", "机器人控制接口（构造需要硬件串口，config_path 必传）")
         .def(py::init<const std::string&>(), py::arg("config_path"),
-             "robot_config.yaml 的路径（由 Python 层 hightorque_robot.Robot 负责解析默认值）")
+             "robot_config.yaml 的外部路径（由 Python 调用方提供）")
         .def("request_motor_state", &Robot::request_motor_state)
         .def("motor_zero_pos_reset", &Robot::motor_zero_pos_reset)
         .def("send", &Robot::send)

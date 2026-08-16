@@ -16,7 +16,7 @@ param(
 # Build native Windows wheels for hightorque-robot.
 #
 # Usage:
-#   powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1
+#   powershell -ExecutionPolicy Bypass -File tools/python-build/build_wheels.ps1
 #
 # By default, build the Python 3.8-3.14 win_amd64 matrix from pyproject.toml.
 # Requires 64-bit Windows 10, Python 3.11+, and MSVC or MinGW-w64.
@@ -25,7 +25,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = [IO.Path]::GetFullPath((Join-Path $scriptDir ".."))
+$repoRoot = [IO.Path]::GetFullPath((Join-Path $scriptDir "../.."))
 $projectDir = [IO.Path]::GetFullPath((Join-Path $scriptDir "python"))
 $coreDir = [IO.Path]::GetFullPath((Join-Path $projectDir "core"))
 $distDir = [IO.Path]::GetFullPath((Join-Path $scriptDir "dist"))

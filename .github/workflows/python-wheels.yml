@@ -1,6 +1,7 @@
 name: Python wheels
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
@@ -43,17 +44,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf tools/dist
+          rm -rf tools/python-build/dist
           {
             echo "==> building cp38-cp314 wheels"
             CIBW_BUILD="cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*" \
             CIBW_VERSION_SPEC="cibuildwheel==3.4.1" \
-              tools/build_wheels.sh "${{ matrix.arch }}"
+              tools/python-build/build_wheels.sh "${{ matrix.arch }}"
 
             echo "==> verifying expected wheel tags"
             shopt -s nullglob
             for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
-              matches=(tools/dist/*-"${tag}"-*.whl)
+              matches=(tools/python-build/dist/*-"${tag}"-*.whl)
               if [ "${#matches[@]}" -eq 0 ]; then
                 echo "error: missing ${tag} wheel" >&2
                 exit 1
@@ -75,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: hightorque-robot-linux-${{ matrix.arch }}-cp38-cp314
-          path: tools/dist/*.whl
+          path: tools/python-build/dist/*.whl
           if-no-files-found: error
 
       - name: Upload build log
@@ -107,11 +108,11 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          Remove-Item -LiteralPath tools/dist -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath tools/python-build/dist -Recurse -Force -ErrorAction SilentlyContinue
 
           $env:CIBW_BUILD = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
           $env:CIBW_VERSION_SPEC = "cibuildwheel==3.4.1"
-          powershell -ExecutionPolicy Bypass -File tools/build_wheels.ps1 2>&1 |
+          powershell -ExecutionPolicy Bypass -File tools/python-build/build_wheels.ps1 2>&1 |
             Tee-Object -FilePath build-windows.log
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
@@ -119,7 +120,7 @@ jobs:
 
           Write-Host "==> verifying expected wheel tags"
           foreach ($tag in @("cp38", "cp39", "cp310", "cp311", "cp312", "cp313", "cp314")) {
-            $matches = @(Get-ChildItem -LiteralPath tools/dist -Filter "*-$tag-*.whl")
+            $matches = @(Get-ChildItem -LiteralPath tools/python-build/dist -Filter "*-$tag-*.whl")
             if ($matches.Count -eq 0) {
               throw "Missing $tag wheel"
             }
@@ -140,7 +141,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: hightorque-robot-windows-amd64-cp38-cp314
-          path: tools/dist/*.whl
+          path: tools/python-build/dist/*.whl
           if-no-files-found: error
 
       - name: Upload build log

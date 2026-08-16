@@ -130,6 +130,6 @@ def test_convert_roundtrip():
 
 
 def test_parse_robot_params_signature():
-    # 无硬件可跑：用 wheel 内置配置
-    params = hightorque_robot.parse_robot_params()
-    assert params.robot_name == "Single_Motor"
+    # Python 绑定只提供带 config_path 的版本。
+    with pytest.raises(TypeError):
+        _core.parse_robot_params()
