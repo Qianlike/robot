@@ -177,17 +177,40 @@ jobs:
           set -euo pipefail
           echo "Downloaded artifact files:"
           find dist -type f -printf '  - %p\n' | sort
-          mapfile -d '' wheels < <(find dist/wheels -type f -name '*.whl' -print0 | sort -z)
-          if [ "${#wheels[@]}" -lt 21 ]; then
-            echo "::error title=Too few wheels::expected at least 21 wheels, found ${#wheels[@]}"
-            exit 1
-          fi
-          for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
-            if ! find dist/wheels -type f -name "*-${tag}-*.whl" -print -quit | grep -q .; then
-              echo "::error title=Missing Python wheel::no ${tag} wheel was downloaded"
+          bundles=()
+          bundle_wheels() {
+            local platform="$1"
+            local source_dir="dist/wheels/hightorque-robot-${platform}-cp38-cp314"
+            local output="dist/hightorque-robot-${platform}-python-wheels.zip"
+            local tag
+            local -a wheels
+
+            if [ ! -d "${source_dir}" ]; then
+              echo "::error title=Missing wheel artifact::${source_dir} was not downloaded"
               exit 1
             fi
-          done
+
+            mapfile -d '' wheels < <(find "${source_dir}" -type f -name '*.whl' -print0 | sort -z)
+            if [ "${#wheels[@]}" -lt 7 ]; then
+              echo "::error title=Too few wheels::${platform} has ${#wheels[@]} wheels, expected at least 7"
+              exit 1
+            fi
+            for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
+              if ! find "${source_dir}" -type f -name "*-${tag}-*.whl" -print -quit | grep -q .; then
+                echo "::error title=Missing Python wheel::${platform} has no ${tag} wheel"
+                exit 1
+              fi
+            done
+
+            rm -f "${output}"
+            zip -q -j "${output}" "${wheels[@]}"
+            bundles+=("${output}")
+            printf 'Python wheel bundle (%s):\n  - %s\n' "${platform}" "${output}"
+          }
+
+          bundle_wheels linux-x86_64
+          bundle_wheels linux-aarch64
+          bundle_wheels windows-amd64
 
           tag="${GITHUB_REF_NAME}"
           cpp_archive="dist/hightorque-robot-${tag}-cpp-source.tar.gz"
@@ -198,10 +221,10 @@ jobs:
             CMakeLists.txt include src lib example robot_param \
             > "${cpp_archive}"
 
-          sha256sum "${wheels[@]}" "${cpp_archive}" > dist/SHA256SUMS
+          sha256sum "${bundles[@]}" "${cpp_archive}" > dist/SHA256SUMS
           printf 'C++ source archive:\n  - %s\n' "${cpp_archive}"
-          printf 'Python wheel files (%s):\n' "${#wheels[@]}"
-          printf '  - %s\n' "${wheels[@]}"
+          printf 'Python wheel bundles (%s):\n' "${#bundles[@]}"
+          printf '  - %s\n' "${bundles[@]}"
 
       - name: Create or update GitHub Release
         shell: bash
@@ -210,7 +233,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
-          mapfile -d '' assets < <(find dist -type f \( -name '*.whl' -o -name '*-cpp-source.tar.gz' -o -name 'SHA256SUMS' \) -print0 | sort -z)
+          mapfile -d '' assets < <(find dist -type f \( -name '*-python-wheels.zip' -o -name '*-cpp-source.tar.gz' -o -name 'SHA256SUMS' \) -print0 | sort -z)
           if ! gh release view "${tag}" >/dev/null 2>&1; then
             gh release create "${tag}" \
               --verify-tag \
