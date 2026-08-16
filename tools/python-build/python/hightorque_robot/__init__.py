@@ -4,16 +4,15 @@
 
     from hightorque_robot import Robot, parse_robot_params
 
-    robot = Robot()                               # 自动查找参数文件
-    robot = Robot("/path/to/robot_config.yaml")   # 显式指定
-    params = parse_robot_params()                 # 仅解析参数（无需硬件）
+    robot = Robot("/path/to/robot_config.yaml")   # 必须显式指定
+    params = parse_robot_params("/path/to/robot_config.yaml")
 
 参数文件查找顺序（resolve_config_path）:
     1. 显式传入的 config_path
     2. 环境变量 ``HIGHTORQUE_ROBOT_CONFIG``
     3. 当前目录 ``robot_param/robot_config.yaml``
     4. 当前目录 ``../robot_param/robot_config.yaml``（保持 C++ 原始行为）
-    5. wheel 内置的默认参数（Robot 构造后可通过 ``robot.params`` 查看）
+    wheel 不包含配置文件，调用方必须提供外部配置文件。
 
 注意:
     - 支持 Linux 和 Windows 10；Windows 按 USB ``MI_xx`` 接口号映射 CAN 通道。
@@ -46,10 +45,6 @@ from ._core import (
 
 __version__ = _core_version
 
-# wheel 内置的默认参数文件
-_BUNDLED_CONFIG: Path = Path(__file__).resolve().parent / "robot_param" / "robot_config.yaml"
-
-
 def resolve_config_path(config_path: Optional[Union[str, Path]] = None) -> Path:
     """解析 robot_config.yaml 的路径，返回存在的文件路径。
 
@@ -71,8 +66,6 @@ def resolve_config_path(config_path: Optional[Union[str, Path]] = None) -> Path:
     cwd = Path.cwd()
     candidates.append(cwd / "robot_param" / "robot_config.yaml")
     candidates.append(cwd / ".." / "robot_param" / "robot_config.yaml")
-    candidates.append(_BUNDLED_CONFIG)
-
     for candidate in candidates:
         if candidate.is_file():
             return candidate
@@ -104,7 +97,9 @@ class Robot(_core.Robot):
     注意：端口存在但打开失败/握手超时仍可能触发 C++ 端 exit()。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Union[str, Path]):
+        if config_path is None:
+            raise TypeError("Robot() requires an explicit config_path")
         self.config_path = resolve_config_path(config_path).resolve().as_posix()
         self.params = _parse_robot_params(self.config_path)
 

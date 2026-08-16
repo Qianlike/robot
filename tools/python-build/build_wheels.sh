@@ -2,8 +2,8 @@
 # Build hightorque-robot Linux wheels with cibuildwheel.
 #
 # Usage:
-#   ./tools/build_wheels.sh          # x86_64
-#   ./tools/build_wheels.sh aarch64  # ARM64, requires Docker/QEMU or native ARM
+#   ./tools/python-build/build_wheels.sh          # x86_64
+#   ./tools/python-build/build_wheels.sh aarch64  # ARM64, requires Docker/QEMU or native ARM
 
 set -euo pipefail
 
@@ -16,7 +16,7 @@ VENV_DIR="${SCRIPT_DIR}/.cibw-venv"
 echo "==> staging core sources -> ${PROJECT_DIR}/core/"
 rsync -a --delete \
     --exclude .git --exclude build --exclude tools --exclude '*.pyc' \
-    "${SCRIPT_DIR}/../" "${PROJECT_DIR}/core/"
+    "${SCRIPT_DIR}/../../" "${PROJECT_DIR}/core/"
 
 export PATH="${HOME}/.local/bin:${PATH}"
 if [ ! -d "${VENV_DIR}" ]; then
@@ -54,7 +54,7 @@ fi
 
 if ! command -v docker >/dev/null 2>&1; then
     if [ "${ARCH}" != "x86_64" ]; then
-        echo "error: building ${ARCH} requires Docker; use ./tools/build_arm_wheels.sh for zig-based ARM builds." >&2
+        echo "error: building ${ARCH} requires Docker; use ./tools/python-build/build_arm_wheels.sh for zig-based ARM builds." >&2
         exit 1
     fi
 

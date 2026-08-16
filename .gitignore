@@ -1,10 +1,15 @@
 build/*
 .vscode/*
 .claude/*
-tools/python/build/*
-tools/python/core/*
-tools/python/dist/*
-tools/dist/*
+# Python wheel build outputs and local build environments
+tools/python-build/dist/*
+tools/python-build/cache/*
+tools/python-build/build/*
+tools/python-build/.cibw-venv-windows/*
+tools/python-build/python/build/*
+tools/python-build/python/core/*
+tools/python-build/python/.pytest_cache/*
+tools/python-build/legacy-python/*
 tools/.cibw-venv/*
 tools/.cibw-venv-windows/*
 *.pyc

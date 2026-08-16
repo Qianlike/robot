@@ -14,11 +14,11 @@ set(HIGHTORQUE_BUILD_DEMO OFF CACHE BOOL "" FORCE)
 # ==================== 核心库 ====================
 # 双路回退：
 #   - cibuildwheel 容器只包含本项目目录，用构建脚本 rsync 的 core/ 副本
-#   - 本地 pip install ./tools/python 直接引用仓库根
+#   - 本地 pip install ./tools/python-build/python 直接引用仓库根
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/core/CMakeLists.txt")
     add_subdirectory(core hightorque_fdcan_core EXCLUDE_FROM_ALL)
 else()
-    add_subdirectory(../.. hightorque_fdcan_core EXCLUDE_FROM_ALL)
+    add_subdirectory(../../.. hightorque_fdcan_core EXCLUDE_FROM_ALL)
 endif()
 
 # ==================== Python 绑定 ====================
@@ -46,17 +46,3 @@ endif()
 install(TARGETS _core
         LIBRARY DESTINATION hightorque_robot
         RUNTIME DESTINATION hightorque_robot)
-
-# 内置参数数据用 CMake install 打进 wheel（不依赖 wheel.packages 的文件过滤，
-# 该过滤在 scikit-build-core 1.x 下会漏掉 .yaml）。
-# 单一数据源：仓库根 robot_param/（core 分支为 staging 副本），不在此维护拷贝。
-# 注意：原始 robot_config.yaml 的 param_file 为相对路径，C++ 端按 config 所在
-# 目录解析，在 wheel 内归一化后同样指向 robot_param/ 目录，无需修改版。
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/core/robot_param")
-    set(HIGHTORQUE_ROBOT_PARAM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/robot_param")
-else()
-    set(HIGHTORQUE_ROBOT_PARAM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../robot_param")
-endif()
-install(DIRECTORY ${HIGHTORQUE_ROBOT_PARAM_DIR}
-        DESTINATION hightorque_robot
-        FILES_MATCHING PATTERN "*.yaml")

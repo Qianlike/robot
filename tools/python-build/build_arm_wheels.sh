@@ -7,19 +7,20 @@
 #     由运行时宿主解析，Linux 链接共享库时未解析符号默认允许）
 #
 # 用法:
-#   ./tools/build_arm_wheels.sh                # 构建 Python 3.12
-#   ./tools/build_arm_wheels.sh 3.8 3.10 3.12  # 指定版本（3.8~3.15）
-#   ./tools/build_arm_wheels.sh all            # 全部 3.8~3.14
+#   ./tools/python-build/build_arm_wheels.sh                # 构建 Python 3.12
+#   ./tools/python-build/build_arm_wheels.sh 3.8 3.10 3.12  # 指定版本（3.8~3.15）
+#   ./tools/python-build/build_arm_wheels.sh all            # 全部 3.8~3.14
 #
-# 产物: tools/dist/hightorque_robot-<ver>-cp<xy>-cp<xy>-linux_aarch64.whl
+# 产物: tools/python-build/dist/hightorque_robot-<ver>-cp<xy>-cp<xy>-linux_aarch64.whl
 # 环境变量: NJU_MIRROR=1 使用南大 github-release 镜像（默认；GitHub 直连失败时自动回退）
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "${SCRIPT_DIR}")"
+REPO_ROOT="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 DIST_DIR="${SCRIPT_DIR}/dist"
-CACHE_DIR="${HOME}/.cache/ht-arm-py"
-WORK_DIR="/tmp/ht-arm-build-$$"
+CACHE_DIR="${SCRIPT_DIR}/cache/arm-python"
+BUILD_DIR="${SCRIPT_DIR}/build"
+WORK_DIR="${BUILD_DIR}/arm-$$"
 PYBIND11_VERSION="2.13.6"
 
 # zig 常见安装位置（~/.local/bin 等）
@@ -47,7 +48,7 @@ else
     PYVERS=("$@")
 fi
 
-mkdir -p "${DIST_DIR}" "${CACHE_DIR}"
+mkdir -p "${DIST_DIR}" "${CACHE_DIR}" "${BUILD_DIR}"
 
 # ==================== pybind11 include（缓存） ====================
 PYB_DIR="${CACHE_DIR}/pybind11-${PYBIND11_VERSION}"
@@ -167,7 +168,7 @@ EOF
     SRCS=(src/robot.cpp src/canport.cpp src/motor.cpp src/crc.cpp src/convert.cpp src/parse_robot_params.cpp
           lib/serial/src/serial.cc lib/serial/src/impl/unix.cc lib/serial/src/impl/list_ports/list_ports_linux.cc
           lib/yaml-cpp/src/*.cpp
-          tools/python/src/python_bindings.cpp)
+          tools/python-build/python/src/python_bindings.cpp)
     # 注意：输出名用序号而非 basename —— src/convert.cpp 与
     # lib/yaml-cpp/src/convert.cpp 同名，basename 会互相覆盖导致核心符号丢失
     INCS=(-I "${STUB_DIR}" -I include -I lib/serial/include -I lib/yaml-cpp/include
@@ -210,9 +211,6 @@ src_init = tools / "python" / import_name / "__init__.py"
 add(f"{import_name}/__init__.py", src_init.read_bytes())
 so = work / f"_core.cpython-{xy}-aarch64-linux-gnu.so"
 add(f"{import_name}/{so.name}", so.read_bytes())
-for yaml_path in sorted((repo / "robot_param").glob("*.yaml")):
-    add(f"{import_name}/robot_param/{yaml_path.name}", yaml_path.read_bytes())
-
 # dist-info
 metadata = f"""Metadata-Version: 2.1
 Name: {name}
