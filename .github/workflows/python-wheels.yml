@@ -1,13 +1,9 @@
 name: Python wheels
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - v6
-      - codex/test-cibuildwheel-3.4.1
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: read
@@ -28,6 +24,7 @@ jobs:
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+      CIBW_SKIP: "*-musllinux_*"
       CIBW_TEST_SKIP: "*"
       CIBW_TEST_COMMAND: >-
         python -c "import hightorque_robot, hightorque_robot._core; print(hightorque_robot.__version__)"
@@ -154,45 +151,70 @@ jobs:
           path: build-windows.log
           if-no-files-found: ignore
 
-  publish-python:
-    name: Publish Python package
+  publish-release:
+    name: Publish GitHub Release
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - linux
       - windows-amd64
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
-      packages: write
+      contents: write
     steps:
-      - name: Download wheel artifacts
-        uses: actions/download-artifact@v5
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Download Python wheel artifacts
+        uses: actions/download-artifact@v7
         with:
           pattern: hightorque-robot-*-cp38-cp314
-          path: dist
-          merge-multiple: true
+          path: dist/wheels
+          merge-multiple: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Publish wheels to GitHub Packages
+      - name: Prepare C++ source archive and checksums
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check --no-input twine
-          shopt -s nullglob
-          wheels=(dist/*.whl)
-          if [ "${#wheels[@]}" -eq 0 ]; then
-            echo "error: no wheel files were downloaded" >&2
+          echo "Downloaded artifact files:"
+          find dist -type f -printf '  - %p\n' | sort
+          mapfile -d '' wheels < <(find dist/wheels -type f -name '*.whl' -print0 | sort -z)
+          if [ "${#wheels[@]}" -lt 21 ]; then
+            echo "::error title=Too few wheels::expected at least 21 wheels, found ${#wheels[@]}"
             exit 1
           fi
-          printf 'Publishing %s wheel files:\n' "${#wheels[@]}"
+          for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
+            if ! find dist/wheels -type f -name "*-${tag}-*.whl" -print -quit | grep -q .; then
+              echo "::error title=Missing Python wheel::no ${tag} wheel was downloaded"
+              exit 1
+            fi
+          done
+
+          tag="${GITHUB_REF_NAME}"
+          cpp_archive="dist/hightorque-robot-${tag}-cpp-source.tar.gz"
+          git archive \
+            --format=tar.gz \
+            --prefix="hightorque-robot-${tag}-cpp-source/" \
+            "${GITHUB_SHA}" \
+            CMakeLists.txt include src lib example robot_param \
+            > "${cpp_archive}"
+
+          sha256sum "${wheels[@]}" "${cpp_archive}" > dist/SHA256SUMS
+          printf 'C++ source archive:\n  - %s\n' "${cpp_archive}"
+          printf 'Python wheel files (%s):\n' "${#wheels[@]}"
           printf '  - %s\n' "${wheels[@]}"
-          python -m twine upload \
-            --repository-url "https://pypi.pkg.github.com/${GITHUB_REPOSITORY_OWNER}" \
-            "${wheels[@]}"
+
+      - name: Create or update GitHub Release
+        shell: bash
         env:
-          TWINE_USERNAME: ${{ github.actor }}
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          mapfile -d '' assets < <(find dist -type f \( -name '*.whl' -o -name '*-cpp-source.tar.gz' -o -name 'SHA256SUMS' \) -print0 | sort -z)
+          if ! gh release view "${tag}" >/dev/null 2>&1; then
+            gh release create "${tag}" \
+              --verify-tag \
+              --title "hightorque-robot ${tag}" \
+              --generate-notes
+          fi
+          gh release upload "${tag}" "${assets[@]}" --clobber
