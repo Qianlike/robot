@@ -6,6 +6,8 @@ on:
     branches:
       - v6
       - codex/test-cibuildwheel-3.4.1
+    tags:
+      - "v*"
 
 permissions:
   contents: read
@@ -151,3 +153,46 @@ jobs:
           name: hightorque-robot-windows-amd64-cp38-cp314-log
           path: build-windows.log
           if-no-files-found: ignore
+
+  publish-python:
+    name: Publish Python package
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - linux
+      - windows-amd64
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: hightorque-robot-*-cp38-cp314
+          path: dist
+          merge-multiple: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Publish wheels to GitHub Packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input twine
+          shopt -s nullglob
+          wheels=(dist/*.whl)
+          if [ "${#wheels[@]}" -eq 0 ]; then
+            echo "error: no wheel files were downloaded" >&2
+            exit 1
+          fi
+          printf 'Publishing %s wheel files:\n' "${#wheels[@]}"
+          printf '  - %s\n' "${wheels[@]}"
+          python -m twine upload \
+            --repository-url "https://pypi.pkg.github.com/${GITHUB_REPOSITORY_OWNER}" \
+            "${wheels[@]}"
+        env:
+          TWINE_USERNAME: ${{ github.actor }}
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
