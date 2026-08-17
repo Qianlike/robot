@@ -193,11 +193,9 @@ std::vector<std::string> CanPort::get_ser_list()
 #endif
 
     PRINT_INFO("detected %zu serial port(s):", com_board_ports.size());
-    for (size_t i = 0; i < com_board_ports.size(); i++)
+    for (uint8_t i = 0; i < com_board_ports.size(); i++)
     {
-        PRINT_INFO("  [%zu] %s -> %s", i + 1,
-            com_board_ports[i].hardware_id.c_str(),
-            com_board_ports[i].port.c_str());
+        PRINT_INFO("  [CanPort%d] serial -> %s", i + 1, com_board_ports[i].port.c_str());
     }
 
     std::vector<std::string> port_names;
@@ -603,20 +601,10 @@ void CanPort::check_motor_version()
 
         if (failed_id_list.size() == 0)
         {
-            for (auto it : map_motors_state)
-            {
-                PRINT_INFO("[CanPort%d] motor[%d] fw version: v%d.%d.%d", can_port_id, it.first,
-                    it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch);
-            }
             return;
         }
     }
 
-    PRINT_ERROR("[CanPort%d] motor fw version check err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
-    for (auto it : failed_id_list)
-    {
-        PRINT_ERROR("  motor[%d]", it);
-    }
 }
 
 
@@ -639,7 +627,7 @@ void CanPort::check_motor_model()
         failed_id_list.clear();
         for (auto it : map_motors_state)
         {
-            if (it.second.model.size() == 0)
+            if (it.second.fw_version.data32 == 0 || it.second.model.size() == 0)
             {
                 failed_id_list.push_back(it.first);
             }
@@ -649,17 +637,21 @@ void CanPort::check_motor_model()
         {
             for (auto it : map_motors_state)
             {
-                PRINT_INFO("[CanPort%d] motor[%d] model: %s", can_port_id, it.first,
+                PRINT_INFO("[CanPort%d] motor[%d] fw version: v%d.%d.%d, model: %s", can_port_id, it.first,
+                    it.second.fw_version.major, it.second.fw_version.minor, it.second.fw_version.patch,
                     it.second.model.c_str());
             }
             return;
         }
     }
 
-    PRINT_ERROR("[CanPort%d] motor model check err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
-    for (auto it : failed_id_list)
+    PRINT_ERROR("[CanPort%d] motor fw version/model check err, %zu motor(s) failed:", can_port_id, failed_id_list.size());
+    for (auto id : failed_id_list)
     {
-        PRINT_ERROR("  motor[%d]", it);
+        const auto& motor = map_motors_state.at(id);
+        PRINT_ERROR("[CanPort%d] motor[%d] fw version: v%d.%d.%d, model: %s", can_port_id, id,
+            motor.fw_version.major, motor.fw_version.minor, motor.fw_version.patch,
+            motor.model.c_str());
     }
 }
 

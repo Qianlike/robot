@@ -38,7 +38,7 @@ int main()
         {
             const float id = item.first;
             const motor_state_t& motor = item.second;
-            std::printf("ID: %2d, mode: %2d, fluat: %2d, pos: %2.3f, vel: %2.3f, tor: %2.3f 11\n",
+            std::printf("ID: %2d, mode: %2d, fluat: %2d, pos: %2.3f, vel: %2.3f, tor: %2.3f\n",
                         static_cast<int>(id), motor.mode, motor.fault,
                         motor.position, motor.velocity, motor.torque);
         }
