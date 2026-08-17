@@ -741,16 +741,14 @@ void CanPort::recv()
         prot_rdata.head.s.len = 0;
         try
         {  
-            if (ser_dev.read(&prot_rdata.head.raw[0], 1) == 0)
+            ser_dev.read(&prot_rdata.head.raw[0], 1);
+            const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
+            for (auto &it : map_motors_state)
             {
-                const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
-                for (auto &it : map_motors_state)
+                if (time - it.second.time >= std::chrono::milliseconds(200))
                 {
-                    if (time - it.second.time >= std::chrono::milliseconds(200))
-                    {
-                        it.second.position = 999.0f;
-                        it.second.time = time;
-                    }
+                    it.second.position = 999.0f;
+                    it.second.time = time;
                 }
             }
 

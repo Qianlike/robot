@@ -6,14 +6,15 @@
 
 int main()
 {
+    constexpr auto kControlPeriod = std::chrono::microseconds(1000);
     Robot robot;
 
     robot.motor_zero_pos_reset();
 
+    auto next_tick = std::chrono::steady_clock::now();
     while (1)
     {
         robot.request_motor_state();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         for (Motor& motor : robot.motors)
         {
@@ -22,6 +23,9 @@ int main()
                         motor.get_id(), state->mode, state->fault,
                         state->position, state->velocity, state->torque);
         }
+
+        next_tick += kControlPeriod;
+        std::this_thread::sleep_until(next_tick);
     }
 
     robot.stop();

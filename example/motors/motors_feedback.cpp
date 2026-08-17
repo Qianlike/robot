@@ -10,9 +10,12 @@ static std::atomic<bool> exit_flag(false);
 
 int main()
 {
+    constexpr auto kControlPeriod = std::chrono::microseconds(1000);
     std::signal(SIGINT, [](int) { exit_flag.store(true); });
 
     Robot robot;
+
+    auto next_tick = std::chrono::steady_clock::now();
 
     // 只查询并通过 robot.motors 打印反馈，不下发任何电机控制指令。
     while (!exit_flag.load())
@@ -21,7 +24,6 @@ int main()
         {
             motor.request_motor_state();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         for (Motor& motor : robot.motors)
         {
@@ -33,6 +35,9 @@ int main()
                             state->position, state->velocity, state->torque);
             }
         }
+
+        next_tick += kControlPeriod;
+        std::this_thread::sleep_until(next_tick);
     }
 
     robot.stop();

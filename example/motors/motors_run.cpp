@@ -11,12 +11,14 @@ static std::atomic<bool> exit_flag(false);
 
 int main()
 {
+    constexpr auto kControlPeriod = std::chrono::microseconds(1000);
     std::signal(SIGINT, [](int) { exit_flag.store(true); });
 
     Robot robot;
 
     float pos = 0.314f;
     std::chrono::steady_clock::time_point tick = std::chrono::steady_clock::now();
+    auto next_tick = std::chrono::steady_clock::now();
     while (!exit_flag.load())
     {
         if (std::chrono::steady_clock::now() - tick >= std::chrono::milliseconds(1000))
@@ -39,7 +41,8 @@ int main()
                         state->position, state->velocity, state->torque);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        next_tick += kControlPeriod;
+        std::this_thread::sleep_until(next_tick);
     }
 
     robot.stop();
