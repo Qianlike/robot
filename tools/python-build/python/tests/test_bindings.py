@@ -1,10 +1,18 @@
-"""绑定层基础测试：结构体往返、常量、纯函数（不触碰硬件）。"""
+"""绑定层基础测试：结构体往返和公共类方法名称（不触碰硬件）。"""
 from importlib.metadata import version as package_version
 
 import pytest
 
 import hightorque_robot
-from hightorque_robot import FdcanFault, FdcanState, MotorState, VersionInfo
+from hightorque_robot import (
+    CanPort,
+    FdcanFault,
+    FdcanState,
+    Motor,
+    MotorState,
+    Robot,
+    VersionInfo,
+)
 from hightorque_robot import _core
 
 
@@ -83,53 +91,113 @@ def test_fdcan_fault_values():
     assert FdcanFault.BUS_OFF == 3
 
 
-def test_motor_state_age_nonnegative():
-    s = MotorState()
-    assert hightorque_robot.motor_state_age(s) >= 0.0
-
-
-def test_detect_com_ports_returns_str_list():
-    ports = hightorque_robot.detect_com_ports()
-    assert isinstance(ports, list)
-    for p in ports:
-        assert isinstance(p, str)
-
-
-def test_mode_constants():
-    assert _core.MODE_POSITION == 0x80
-    assert _core.MODE_VELOCITY == 0x81
-    assert _core.MODE_TORQUE == 0x82
-    assert _core.MODE_STOP == 0x85
-    assert _core.MODE_BRAKE == 0x86
-    assert _core.MODE_RESET == 0x87
-    assert _core.MODE_VEL_ACC == 0x90
-    assert _core.MODE_POS_VEL_TQE == 0x92
-    assert _core.MODE_POS_VEL_ACC == 0x95
-    assert _core.MODE_POS_VEL_TQE_KP_KD == 0x98
-    assert _core.MODE_MOTOR_STATE == 20
-
-
-def test_pi_constants():
-    assert _core.MY_PI == pytest.approx(3.14159, abs=1e-5)
-    assert _core.MY_2PI == pytest.approx(6.28318, abs=1e-5)
-
-
-def test_convert_roundtrip():
-    # 注意：convert.cpp 先转圈数（radian/2π）再量化，量化步长为 2π/SCALE
-    # pos 步长 2π/10000 ≈ 6.3e-4；vel 步长 2π/4000 ≈ 1.6e-3；
-    # tqe 同样过圈数换算（C++ 现有行为），步长 2π/100 ≈ 6.3e-2
-    raw = _core.pos_float2int(1.5)
-    assert isinstance(raw, int)
-    assert _core.pos_int2float(raw) == pytest.approx(1.5, abs=1e-3)
-
-    raw_vel = _core.vel_float2int(-0.5)
-    assert _core.vel_int2float(raw_vel) == pytest.approx(-0.5, abs=2e-3)
-
-    raw_tqe = _core.tqe_float2int(2.0)
-    assert _core.tqe_int2float(raw_tqe) == pytest.approx(2.0, abs=0.1)
-
-
 def test_parse_robot_params_signature():
     # Python 绑定只提供带 config_path 的版本。
     with pytest.raises(TypeError):
         _core.parse_robot_params()
+
+
+def test_cpp_public_method_names_are_bound_verbatim():
+    """C++ public control methods must keep their names in Python."""
+    expected_methods = {
+        CanPort: {
+            "position",
+            "velocity",
+            "torque",
+            "vel_acc",
+            "pos_vel_acc",
+            "pos_vel_MAXtqe",
+            "pos_vel_tqe_kp_kd",
+            "stop",
+            "brake",
+            "reset",
+            "request_motor_state",
+            "motor_zero_pos_reset",
+            "get_motor_state",
+            "send",
+            "get_can_port_state",
+        },
+        Motor: {
+            "position",
+            "velocity",
+            "torque",
+            "vel_acc",
+            "pos_vel_acc",
+            "pos_vel_MAXtqe",
+            "pos_vel_tqe_kp_kd",
+            "stop",
+            "brake",
+            "reset",
+            "request_motor_state",
+            "get_motor_state",
+            "get_id",
+        },
+        Robot: {
+            "request_motor_state",
+            "motor_zero_pos_reset",
+            "send",
+            "position",
+            "velocity",
+            "torque",
+            "vel_acc",
+            "pos_vel_acc",
+            "pos_vel_MAXtqe",
+            "pos_vel_tqe_kp_kd",
+            "stop",
+            "brake",
+            "reset",
+            "get_motor_state",
+            "get_can_port_state",
+        },
+    }
+
+    for cls, names in expected_methods.items():
+        assert names <= set(dir(cls)), cls.__name__
+
+    # These were previously renamed by the Python binding and must not be
+    # mistaken for the C++ API names.
+    assert not hasattr(Motor, "id")
+    assert not hasattr(CanPort, "motors_state")
+    assert hasattr(CanPort, "map_motors_state")
+
+
+def test_unnecessary_core_helpers_are_not_exposed():
+    """The Python module stays limited to the SDK control/data interface."""
+    removed_names = {
+        "detect_com_ports",
+        "motor_state_age",
+        "pos_float2int",
+        "vel_float2int",
+        "tqe_float2int",
+        "acc_float2int",
+        "kp_float2int",
+        "kd_float2int",
+        "pos_int2float",
+        "vel_int2float",
+        "tqe_int2float",
+        "MODE_POSITION",
+        "MODE_VELOCITY",
+        "MODE_TORQUE",
+        "MODE_VOLTAGE",
+        "MODE_CURRENT",
+        "MODE_STOP",
+        "MODE_BRAKE",
+        "MODE_RESET",
+        "MODE_VEL_ACC",
+        "MODE_POS_VEL_TQE",
+        "MODE_POS_VEL_ACC",
+        "MODE_POS_VEL_TQE_KP_KD",
+        "MODE_MOTOR_STATE",
+        "MODE_MOTOR_VERSION",
+        "MODE_MOTOR_MODEL",
+        "MODE_MOTOR_POS_RESET",
+        "MY_PI",
+        "MY_2PI",
+        "can_port_count",
+        "motor_count",
+        "time_since_epoch_seconds",
+    }
+
+    assert removed_names.isdisjoint(dir(_core))
+    assert not hasattr(hightorque_robot, "detect_com_ports")
+    assert not hasattr(hightorque_robot, "motor_state_age")

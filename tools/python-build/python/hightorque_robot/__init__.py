@@ -16,9 +16,9 @@
 
 注意:
     - 支持 Linux 和 Windows 10；Windows 按 USB ``MI_xx`` 接口号映射 CAN 通道。
-    - 构造 ``Robot``/``CanPort`` 需要通信板硬件（VID:PID=CAF1:FFFF）；
-      串口数量不足时会抛 ``RuntimeError``。端口存在但打开失败/握手超时等场景
-      C++ 端会 ``exit()`` 直接终止进程（SDK 现状，暂未改造为异常）
+    - 构造 ``Robot``/``CanPort`` 需要通信板硬件（VID:PID=CAF1:FFFF）。
+      端口打开失败、握手超时等场景 C++ 端会 ``exit()`` 直接终止进程
+      （SDK 现状，暂未改造为异常）。
 """
 from __future__ import annotations
 
@@ -38,8 +38,6 @@ from ._core import (
     RobotParams as RobotParams,
     VersionInfo as VersionInfo,
     __version__ as _core_version,
-    detect_com_ports as detect_com_ports,
-    motor_state_age as motor_state_age,
     parse_robot_params as _parse_robot_params,
 )
 
@@ -89,8 +87,7 @@ def parse_robot_params(config_path: Optional[Union[str, Path]] = None) -> RobotP
 class Robot(_core.Robot):
     """机器人控制接口（对 pybind11 绑定类的 Python 封装）。
 
-    构造前先解析参数并预检通信板串口数量，不足时抛 ``RuntimeError``
-    （避免 C++ 端 exit() 直接终止 Python 进程）。构造成功后：
+    构造前先解析参数。构造成功后：
       - ``robot.params``   解析出的参数结构（RobotParams）
       - ``robot.config_path`` 实际使用的配置文件路径
 
@@ -102,14 +99,6 @@ class Robot(_core.Robot):
             raise TypeError("Robot() requires an explicit config_path")
         self.config_path = resolve_config_path(config_path).resolve().as_posix()
         self.params = _parse_robot_params(self.config_path)
-
-        ports = detect_com_ports()
-        if len(ports) < self.params.can_port_num:
-            raise RuntimeError(
-                "需要 %d 个通信板串口 (VID:PID=CAF1:FFFF)，"
-                "当前检测到 %d 个：%s" % (self.params.can_port_num, len(ports), ports or "无")
-            )
-
         super().__init__(self.config_path)
 
 
@@ -126,7 +115,5 @@ __all__ = [
     "MotorParams",
     "parse_robot_params",
     "resolve_config_path",
-    "detect_com_ports",
-    "motor_state_age",
     "__version__",
 ]

@@ -5,70 +5,23 @@
 //     nullptr，且 recv 后台线程并发更新），一律按值拷贝为快照返回
 //   - parse_robot_params 只绑定带路径版本；配置文件由 Python 调用方提供，
 //     且核心代码中 exit(-1)/exit(1) 会直接终止 Python 进程，故不暴露
-//   - detect_com_ports() 供 Python 层构造 Robot/CanPort 前预检硬件
 
 #include "robot.h"
 #include "canport.h"
 #include "motor.h"
 #include "parse_robot_params.h"
 #include "serial_struct.h"
-#include "convert.h"
 #include "version.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <algorithm>
-#include <cctype>
-#include <chrono>
 #include <string>
-#include <vector>
 
 namespace py = pybind11;
 
-namespace
-{
-// 复刻 canport.cpp CanPort::get_ser_list 的跨平台 VID/PID 过滤和 Windows
-// hardware_id 排序逻辑，只返回列表、不 exit，供 Python 层预检。
-std::vector<std::string> detect_com_ports()
-{
-    std::vector<serial::PortInfo> com_board_ports;
-
-    for (const auto& port_info : serial::list_ports())
-    {
-        std::string hw = port_info.hardware_id;
-        std::transform(hw.begin(), hw.end(), hw.begin(),
-            [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
-
-        const bool linux_id = hw.find("VID:PID=CAF1:FFFF") != std::string::npos;
-        const bool windows_id = hw.find("VID_CAF1") != std::string::npos &&
-                                hw.find("PID_FFFF") != std::string::npos;
-
-        if (linux_id || windows_id)
-        {
-            com_board_ports.push_back(port_info);
-        }
-    }
-
-#ifdef _WIN32
-    std::sort(com_board_ports.begin(), com_board_ports.end(),
-        [](const serial::PortInfo& left, const serial::PortInfo& right)
-        {
-            return left.hardware_id < right.hardware_id;
-        });
-#endif
-
-    std::vector<std::string> result;
-    result.reserve(com_board_ports.size());
-    for (const auto& port_info : com_board_ports)
-    {
-        result.push_back(port_info.port);
-    }
-
-    return result;
-}
-} // namespace
-
+// 仅绑定 Robot、Motor、CanPort 的 public 控制方法，以及控制所需的数据结构和
+// 配置解析函数；C++ private 方法和底层协议辅助接口不对 Python 开放。
 PYBIND11_MODULE(_core, m)
 {
     m.doc() = "hightorque_fdcan high-torque motor SDK Python bindings";
@@ -98,8 +51,7 @@ PYBIND11_MODULE(_core, m)
         });
 
     // ==================== 电机状态（motor_state_t） ====================
-    // time 是 steady_clock::time_point，无 pybind11 caster，不绑定；
-    // 用 time_since_epoch_seconds（单调时钟秒）和 motor_state_age()（距上次更新秒数）替代
+    // time 是 steady_clock::time_point，无 pybind11 caster，不绑定。
     py::class_<motor_state_t>(m, "MotorState")
         .def(py::init([]() {
             motor_state_t s = {};
@@ -115,9 +67,6 @@ PYBIND11_MODULE(_core, m)
         .def_readwrite("model", &motor_state_t::model)
         .def_readwrite("name", &motor_state_t::name)
         .def_readwrite("flag", &motor_state_t::flag)
-        .def_property_readonly("time_since_epoch_seconds", [](const motor_state_t& s) {
-            return std::chrono::duration<double>(s.time.time_since_epoch()).count();
-        })
         .def("__repr__", [](const motor_state_t& s) {
             return "MotorState(id=" + std::to_string(0) + ", mode=" + std::to_string(s.mode) +
                    ", fault=" + std::to_string(s.fault) +
@@ -125,11 +74,6 @@ PYBIND11_MODULE(_core, m)
                    ", vel=" + std::to_string(s.velocity) +
                    ", tqe=" + std::to_string(s.torque) + ")";
         });
-
-    // 距上次电机状态更新的秒数（steady_clock 单调时钟）
-    m.def("motor_state_age", [](const motor_state_t& state) {
-        return std::chrono::duration<double>(std::chrono::steady_clock::now() - state.time).count();
-    }, py::arg("state"), "电机状态距上次更新的秒数（单调时钟）");
 
     // ==================== FDCAN 状态 ====================
     py::enum_<fdcan_fault_t>(m, "FdcanFault")
@@ -181,41 +125,6 @@ PYBIND11_MODULE(_core, m)
           static_cast<RobotParams (*)(const std::string&)>(&parse_robot_params),
           py::arg("config_path"), "解析 robot_config.yaml，返回 RobotParams");
 
-    // ==================== 硬件预检 ====================
-    m.def("detect_com_ports", &detect_com_ports,
-          "按 VID:PID=CAF1:FFFF 检测 Linux/Windows 通信板串口列表");
-
-    // ==================== 单位换算（convert.h） ====================
-    m.def("pos_float2int", &pos_float2int, py::arg("data"));
-    m.def("vel_float2int", &vel_float2int, py::arg("data"));
-    m.def("tqe_float2int", &tqe_float2int, py::arg("data"));
-    m.def("acc_float2int", &acc_float2int, py::arg("data"));
-    m.def("kp_float2int", &kp_float2int, py::arg("data"));
-    m.def("kd_float2int", &kd_float2int, py::arg("data"));
-    m.def("pos_int2float", &pos_int2float, py::arg("data"));
-    m.def("vel_int2float", &vel_int2float, py::arg("data"));
-    m.def("tqe_int2float", &tqe_int2float, py::arg("data"));
-
-    // ==================== 常量 ====================
-    m.attr("MODE_POSITION") = MODE_POSITION;
-    m.attr("MODE_VELOCITY") = MODE_VELOCITY;
-    m.attr("MODE_TORQUE") = MODE_TORQUE;
-    m.attr("MODE_VOLTAGE") = MODE_VOLTAGE;
-    m.attr("MODE_CURRENT") = MODE_CURRENT;
-    m.attr("MODE_STOP") = MODE_STOP;
-    m.attr("MODE_BRAKE") = MODE_BRAKE;
-    m.attr("MODE_RESET") = MODE_RESET;
-    m.attr("MODE_VEL_ACC") = MODE_VEL_ACC;
-    m.attr("MODE_POS_VEL_TQE") = MODE_POS_VEL_TQE;
-    m.attr("MODE_POS_VEL_ACC") = MODE_POS_VEL_ACC;
-    m.attr("MODE_POS_VEL_TQE_KP_KD") = MODE_POS_VEL_TQE_KP_KD;
-    m.attr("MODE_MOTOR_STATE") = MODE_MOTOR_STATE;
-    m.attr("MODE_MOTOR_VERSION") = MODE_MOTOR_VERSION;
-    m.attr("MODE_MOTOR_MODEL") = MODE_MOTOR_MODEL;
-    m.attr("MODE_MOTOR_POS_RESET") = MODE_MOTOR_POS_RESET;
-    m.attr("MY_PI") = MY_PI;
-    m.attr("MY_2PI") = MY_2PI;
-
     // ==================== CanPort ====================
     py::class_<CanPort>(m, "CanPort", "单个通信板的 FDCAN 端口（构造需要硬件串口）")
         .def(py::init<uint8_t, const std::map<uint8_t, std::string>&>(),
@@ -249,7 +158,7 @@ PYBIND11_MODULE(_core, m)
              py::return_value_policy::copy, "电机状态快照（None 表示电机不存在）")
         .def("get_can_port_state", &CanPort::get_can_port_state,
              py::return_value_policy::copy, "FDCAN 端口状态快照")
-        .def_property_readonly("motors_state", [](const CanPort& c) {
+        .def_property_readonly("map_motors_state", [](const CanPort& c) {
             return c.map_motors_state;
         }, "电机状态字典快照 {id: MotorState}")
         .def_property_readonly("can_port_state", [](const CanPort& c) {
@@ -272,7 +181,7 @@ PYBIND11_MODULE(_core, m)
         .def("reset", &Motor::reset)
         .def("request_motor_state", &Motor::request_motor_state)
         .def("get_motor_state", &Motor::get_motor_state, py::return_value_policy::copy)
-        .def_property_readonly("id", &Motor::get_id);
+        .def("get_id", &Motor::get_id);
 
     // ==================== Robot ====================
     py::class_<Robot>(m, "Robot", "机器人控制接口（构造需要硬件串口，config_path 必传）")
@@ -298,8 +207,6 @@ PYBIND11_MODULE(_core, m)
              py::return_value_policy::copy, "电机状态快照（None 表示电机不存在）")
         .def("get_can_port_state", &Robot::get_can_port_state, py::arg("can_port_id"),
              py::return_value_policy::copy, "FDCAN 端口状态快照")
-        .def_property_readonly("can_port_count", [](const Robot& r) { return r.can_ports.size(); })
-        .def_property_readonly("motor_count", [](const Robot& r) { return r.motors.size(); })
         .def_property_readonly("can_ports", [](Robot& r) {
             py::object self = py::cast(&r, py::return_value_policy::reference);
             py::tuple result(r.can_ports.size());
