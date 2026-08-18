@@ -178,12 +178,13 @@ jobs:
           set -euo pipefail
           echo "Downloaded artifact files:"
           find dist -type f -printf '  - %p\n' | sort
+          release_tag="${GITHUB_REF_NAME}"
           bundles=()
           bundle_wheels() {
             local platform="$1"
             local source_dir="dist/wheels/hightorque-robot-${platform}-cp38-cp314"
-            local output="dist/hightorque-robot-${platform}-python-wheels.zip"
-            local tag
+            local output="dist/hightorque-robot-${release_tag}-${platform}-python-wheels.zip"
+            local wheel_tag
             local -a wheels
 
             if [ ! -d "${source_dir}" ]; then
@@ -196,9 +197,9 @@ jobs:
               echo "::error title=Too few wheels::${platform} has ${#wheels[@]} wheels, expected at least 7"
               exit 1
             fi
-            for tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
-              if ! find "${source_dir}" -type f -name "*-${tag}-*.whl" -print -quit | grep -q .; then
-                echo "::error title=Missing Python wheel::${platform} has no ${tag} wheel"
+            for wheel_tag in cp38 cp39 cp310 cp311 cp312 cp313 cp314; do
+              if ! find "${source_dir}" -type f -name "*-${wheel_tag}-*.whl" -print -quit | grep -q .; then
+                echo "::error title=Missing Python wheel::${platform} has no ${wheel_tag} wheel"
                 exit 1
               fi
             done
@@ -213,11 +214,10 @@ jobs:
           bundle_wheels linux-aarch64
           bundle_wheels windows-amd64
 
-          tag="${GITHUB_REF_NAME}"
-          cpp_archive="dist/hightorque-robot-${tag}-cpp-source.tar.gz"
+          cpp_archive="dist/hightorque-robot-${release_tag}-cpp-source.tar.gz"
           git archive \
             --format=tar.gz \
-            --prefix="hightorque-robot-${tag}-cpp-source/" \
+            --prefix="hightorque-robot-${release_tag}-cpp-source/" \
             "${GITHUB_SHA}" \
             CMakeLists.txt include src lib example robot_param \
             > "${cpp_archive}"
