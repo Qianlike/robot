@@ -89,6 +89,8 @@ jobs:
 
   windows-amd64:
     name: Windows AMD64 wheels
+    # 暂停 Windows wheel 构建。需要恢复时只需将 false 改为 true。
+    if: false
     runs-on: windows-2022
     env:
       CIBW_TEST_SKIP: "*"
@@ -154,7 +156,12 @@ jobs:
 
   publish-release:
     name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Windows job 暂停时仍允许 Linux 构建结果发布；Windows 恢复后会自动加入发布包。
+    if: >-
+      ${{ always() && startsWith(github.ref, 'refs/tags/v') &&
+          needs.linux.result == 'success' &&
+          (needs['windows-amd64'].result == 'success' ||
+           needs['windows-amd64'].result == 'skipped') }}
     needs:
       - linux
       - windows-amd64
@@ -212,7 +219,11 @@ jobs:
 
           bundle_wheels linux-x86_64
           bundle_wheels linux-aarch64
-          bundle_wheels windows-amd64
+          if [ -d "dist/wheels/hightorque-robot-windows-amd64-cp38-cp314" ]; then
+            bundle_wheels windows-amd64
+          else
+            echo "Windows wheel build is disabled; skipping windows-amd64 bundle"
+          fi
 
           cpp_archive="dist/hightorque-robot-${release_tag}-cpp-source.tar.gz"
           git archive \
