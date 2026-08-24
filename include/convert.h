@@ -4,7 +4,6 @@
 
 #include "common_macros.h"
 #include <stdint.h>
-#include <string>
 
 
 #define  MY_2PI  (6.28318530717f)

@@ -7,7 +7,6 @@
 #include "common_macros.h"
 #include "version.h"
 
-#include <iostream>
 #include <vector>
 #include <thread>
 #include <map>

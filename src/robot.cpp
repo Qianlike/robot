@@ -5,7 +5,7 @@
 
 Robot::Robot()
 {
-    init(parse_robot_params());
+    init(parse_robot_params("../robot_param/robot_config.yaml"));
 }
 
 
@@ -34,6 +34,8 @@ void Robot::init(const RobotParams& robot_params)
             motors.push_back(Motor(can_ports[i].get(), static_cast<uint8_t>(port_params.motors[j].id)));
         }
     }
+
+    PRINT_INFO_G("robot name: %s", robot_params.robot_name.c_str());
 }
 
 

@@ -2,7 +2,6 @@
 #define HIGHTORQUE_VERSION_H
 
 
-// #include "serial_struct.h"
 
 
 

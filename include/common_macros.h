@@ -5,7 +5,6 @@
 #include <cstdio>
 
 
-
 #if 1
 #  define LOG_COLOR_RESET   "\033[0m"
 #  define LOG_COLOR_RED     "\033[1;31m"

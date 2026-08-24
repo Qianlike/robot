@@ -126,10 +126,6 @@ std::string get_dirname(const std::string &path)
 }
 } // namespace
 
-RobotParams parse_robot_params()
-{
-    return parse_robot_params("../robot_param/robot_config.yaml");
-}
 
 RobotParams parse_robot_params(const std::string &config_path)
 {

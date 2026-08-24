@@ -3,7 +3,6 @@
 
 
 #include <stdint.h>
-#include <string>
 
 
 #define  PROT_DATA_LEN          506
