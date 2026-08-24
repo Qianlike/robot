@@ -30,6 +30,8 @@ set(SOURCE_FILES
 # 只需 target_link_libraries(... hightorque_robot) 即可（include 与依赖通过 PUBLIC 传递）
 add_library(hightorque_robot STATIC ${SOURCE_FILES})
 
+target_compile_features(hightorque_robot PUBLIC cxx_std_11)
+
 target_include_directories(hightorque_robot PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/serial/include

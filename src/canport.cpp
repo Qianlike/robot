@@ -62,6 +62,9 @@ CanPort::~CanPort()
 
 void CanPort::init(uint8_t _can_port_id, const std::map<uint8_t, std::string>& map_id_name)
 {
+    sdk_version.data32 = HIGHTORQUE_ROBOT_VERSION;
+    comm_version.data32 = 0;
+
     PRINT_INFO_G("SDK version: v%d.%d.%d", sdk_version.major, sdk_version.minor, sdk_version.patch);
 
     if (_can_port_id < 1)

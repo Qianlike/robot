@@ -27,7 +27,7 @@ void Robot::init(const RobotParams& robot_params)
             map_id_name.insert({static_cast<uint8_t>(motor_param.id), motor_param.name});
         }
 
-        can_ports.push_back(std::make_unique<CanPort>(i + 1, map_id_name));
+        can_ports.emplace_back(new CanPort(i + 1, map_id_name));
 
         for (size_t j = 0; j < port_params.motors.size(); j++)
         {

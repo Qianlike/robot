@@ -73,14 +73,8 @@ public:
     void send(void);
     fdcan_state_s *get_can_port_state(void);
 private:
-    version_s comm_version  // 通信板版本号
-    {
-        .data32 = 0,
-    };
-    version_s sdk_version   // SDK 版本号
-    {
-        .data32 = HIGHTORQUE_ROBOT_VERSION,
-    };
+    version_s comm_version;  // 通信板版本号
+    version_s sdk_version;   // SDK 版本号
     uint8_t can_port_id = 0;
 
     prot_cdc2comm_s prot_tdata;
