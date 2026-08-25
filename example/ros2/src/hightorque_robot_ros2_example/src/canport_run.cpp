@@ -1,0 +1,53 @@
+#include <rclcpp/rclcpp.hpp>
+#include <hightorque_robot_ros2_example/msg/motor_state.hpp>
+
+#include <chrono>
+
+#include "canport.h"
+
+int main(int argc, char** argv)
+{
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<rclcpp::Node>("canport_run");
+    auto publisher = node->create_publisher<hightorque_robot_ros2_example::msg::MotorState>(
+        "motor_states", 10);
+    CanPort can_port(1, {1, 2, 3});
+    float position = 0.314f;
+    auto tick = std::chrono::steady_clock::now();
+    rclcpp::WallRate rate(100.0);
+
+    while (rclcpp::ok())
+    {
+        if (std::chrono::steady_clock::now() - tick >= std::chrono::seconds(1))
+        {
+            tick = std::chrono::steady_clock::now();
+            position *= -1.0f;
+        }
+        for (const auto& item : can_port.map_motors_state)
+        {
+            can_port.pos_vel_acc(static_cast<uint8_t>(item.first), position, 0.314f, 3.14f);
+        }
+        can_port.send();
+
+        for (const auto& item : can_port.map_motors_state)
+        {
+            const motor_state_t& state = item.second;
+            hightorque_robot_ros2_example::msg::MotorState motor;
+            motor.can_port_id = 1;
+            motor.id = item.first;
+            motor.mode = state.mode;
+            motor.fault = state.fault;
+            motor.position = state.position;
+            motor.velocity = state.velocity;
+            motor.torque = state.torque;
+            publisher->publish(motor);
+        }
+        rclcpp::spin_some(node);
+        rate.sleep();
+    }
+
+    can_port.stop();
+    can_port.send();
+    rclcpp::shutdown();
+    return 0;
+}
