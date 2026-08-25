@@ -1,0 +1,58 @@
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <hightorque_robot_ros1_example/MotorState.h>
+
+#include <fstream>
+#include <string>
+
+#include "robot.h"
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "motors_move_zero");
+    ros::NodeHandle node;
+    auto publisher = node.advertise<hightorque_robot_ros1_example::MotorState>(
+        "motor_states", 10);
+    std::string config_path = ros::package::getPath("hightorque_robot_ros1_example") +
+                              "/robot_param/robot_config.yaml";
+    std::ifstream config_file(config_path.c_str());
+    if (!config_file.good())
+    {
+        config_path = std::string(HIGHTORQUE_ROBOT_SOURCE_DIR) +
+                      "/robot_param/robot_config.yaml";
+    }
+    node.param<std::string>("robot_config", config_path, config_path);
+    Robot robot(config_path);
+    ros::Rate rate(100.0);
+
+    while (ros::ok())
+    {
+        for (Motor& motor : robot.motors)
+        {
+            motor.pos_vel_acc(0.0f, 0.314f, 3.14f);
+        }
+        robot.send();
+        for (size_t i = 0; i < robot.can_ports.size(); ++i)
+        {
+            for (const auto& item : robot.can_ports[i]->map_motors_state)
+            {
+                const motor_state_t& state = item.second;
+                hightorque_robot_ros1_example::MotorState motor;
+                motor.can_port_id = static_cast<uint8_t>(i + 1);
+                motor.id = item.first;
+                motor.mode = state.mode;
+                motor.fault = state.fault;
+                motor.position = state.position;
+                motor.velocity = state.velocity;
+                motor.torque = state.torque;
+                publisher.publish(motor);
+            }
+        }
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    robot.stop();
+    robot.send();
+    return 0;
+}

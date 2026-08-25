@@ -1,0 +1,37 @@
+#include <ros/ros.h>
+#include <hightorque_robot_ros1_example/MotorState.h>
+
+#include "canport.h"
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "canport_feedback");
+    ros::NodeHandle node;
+    auto publisher = node.advertise<hightorque_robot_ros1_example::MotorState>("motor_states", 10);
+    CanPort can_port(1, {1});
+    ros::Rate rate(100.0);
+
+    while (ros::ok())
+    {
+        can_port.request_motor_state();
+        for (const auto& item : can_port.map_motors_state)
+        {
+            const motor_state_t& state = item.second;
+            hightorque_robot_ros1_example::MotorState motor;
+            motor.can_port_id = 1;
+            motor.id = item.first;
+            motor.mode = state.mode;
+            motor.fault = state.fault;
+            motor.position = state.position;
+            motor.velocity = state.velocity;
+            motor.torque = state.torque;
+            publisher.publish(motor);
+        }
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    can_port.stop();
+    can_port.send();
+    return 0;
+}
