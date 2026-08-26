@@ -1,30 +1,17 @@
-import signal
 import time
 
 from hightorque_robot import CanPort
 
 
-exit_flag = False
-
-
-def signal_handler(signum, frame):
-    global exit_flag
-    exit_flag = True
-
-
 def main():
     kControlPeriod = 0.001
-    signal.signal(signal.SIGINT, signal_handler)
+    can_port = CanPort(1, [1])
 
-    can_port = CanPort(1, [1, 2, 3])
+    can_port.motor_zero_pos_reset()
 
     next_tick = time.monotonic()
-    while not exit_flag:
-        for item in can_port.map_motors_state.items():
-            id = item[0]
-            can_port.pos_vel_acc(id, 0.0, 0.314, 3.14)
-        can_port.send()
-
+    while True:
+        can_port.request_motor_state()
         for item in can_port.map_motors_state.items():
             id = item[0]
             motor = item[1]

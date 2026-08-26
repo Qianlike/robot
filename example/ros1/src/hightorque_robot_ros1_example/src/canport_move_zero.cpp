@@ -5,17 +5,20 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "canport_move_zero");
+    ros::init(argc, argv, "canport_set_zero");
     ros::NodeHandle node;
     auto publisher = node.advertise<hightorque_robot_ros1_example::MotorState>(
         "motor_states", 10);
-    CanPort can_port(1, {1});
-    can_port.motor_zero_pos_reset();
+    CanPort can_port(1, {1, 2, 3});
     ros::Rate rate(100.0);
 
     while (ros::ok())
     {
-        can_port.request_motor_state();
+        for (const auto& item : can_port.map_motors_state)
+        {
+            can_port.pos_vel_acc(static_cast<uint8_t>(item.first), 0.0f, 0.314f, 3.14f);
+        }
+        can_port.send();
         for (const auto& item : can_port.map_motors_state)
         {
             const motor_state_t& state = item.second;
