@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+_**"
 
 permissions:
   contents: read
@@ -245,11 +246,16 @@ jobs:
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
+          release_options=()
+          if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            release_options+=(--prerelease)
+          fi
           mapfile -d '' assets < <(find dist -type f \( -name '*-python-wheels.zip' -o -name '*-cpp-source.tar.gz' -o -name 'SHA256SUMS' \) -print0 | sort -z)
           if ! gh release view "${tag}" >/dev/null 2>&1; then
             gh release create "${tag}" \
               --verify-tag \
               --title "hightorque-robot ${tag}" \
-              --generate-notes
+              --generate-notes \
+              "${release_options[@]}"
           fi
           gh release upload "${tag}" "${assets[@]}" --clobber

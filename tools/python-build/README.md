@@ -103,14 +103,22 @@ abi3 方案在 pybind11 下不可行。构建/CI 配置已按此固定。
 
 ## GitHub Actions 构建与 Release 发布
 
-GitHub Actions 工作流位于 `.github/workflows/python-wheels.yml`。工作流只在推送正式版本标签时运行，标签格式必须是 `v主版本.次版本.修订版本`，例如：
+GitHub Actions 工作流位于 `.github/workflows/python-wheels.yml`。标签可为正式版 `v主版本.次版本.修订版本`，或以 `_` 分隔后缀的预发布版 `v主版本.次版本.修订版本_任意后缀`。没有后缀的标签为正式版；带 `_` 后缀的标签会在 GitHub 标记为 prerelease：
 
 ```bash
+# 正式版本
 git tag -a v6.0.5 -m "hightorque-robot v6.0.5"
 git push github v6.0.5
+
+# 以下划线分隔、任意后缀的预发布版本（会在 GitHub 标记为 prerelease）
+git tag -a v6.0.6_rc.1 -m "hightorque-robot v6.0.6_rc.1"
+git push github v6.0.6_rc.1
+
+git tag -a v6.0.6_build.42 -m "hightorque-robot v6.0.6_build.42"
+git push github v6.0.6_build.42
 ```
 
-普通分支 push、`v6` 分支 push、`v6.0` 和 `v6.0.5-test1` 都不会触发正式构建。
+普通分支 push、`v6` 分支 push、`v6.0` 以及不符合上述格式的标签均不会触发构建。正式版会创建普通 GitHub Release；带 `_` 后缀的版本会创建 GitHub prerelease。标签后缀只影响 GitHub Release 标识，Python wheel 的版本仍从 `include/version.h` 读取。
 
 每个版本会构建以下 Python wheel：
 
@@ -128,10 +136,11 @@ Linux 使用 manylinux2014 构建，目标是兼容 Ubuntu 20.04 及之后的常
 ```text
 hightorque-robot-linux-x86_64-python-wheels.zip
 hightorque-robot-linux-aarch64-python-wheels.zip
-hightorque-robot-windows-amd64-python-wheels.zip
 hightorque-robot-v<版本号>-cpp-source.tar.gz
 SHA256SUMS
 ```
+
+Windows wheel 构建当前在工作流中处于禁用状态；恢复后会额外发布 `hightorque-robot-windows-amd64-python-wheels.zip`。
 
 每个 Python ZIP 包含对应系统或架构的 7 个 wheel。下载时只选择目标系统和架构的 ZIP，解压后再根据 Python 版本选择一个 wheel，不要把 ZIP 内的 7 个 wheel 一起安装。
 
