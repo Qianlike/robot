@@ -202,12 +202,19 @@ void Robot::request_motor_state()
 }
 
 
-void Robot::motor_zero_pos_reset()
+uint8_t Robot::motor_zero_pos_reset()
 {
+    uint8_t result = 0;
+
     for (auto& can_port : can_ports)
     {
-        can_port->motor_zero_pos_reset();
+        if (can_port->motor_zero_pos_reset() != 0)
+        {
+            result = 1;
+        }
     }
+
+    return result;
 }
 
 

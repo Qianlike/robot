@@ -542,7 +542,7 @@ void CanPort::request_zero_pos_reset()
     send();
 }
 
-void CanPort::motor_zero_pos_reset()
+uint8_t CanPort::motor_zero_pos_reset()
 {
     stop();
     send();
@@ -572,7 +572,7 @@ void CanPort::motor_zero_pos_reset()
         if (failed_id_list.size() == 0)
         {
             PRINT_INFO_G("[CanPort%d] motor zero pos reset ok, %zu motor(s)", can_port_id, map_motors_state.size());
-            return;
+            return 0;
         }
     }
 
@@ -581,6 +581,8 @@ void CanPort::motor_zero_pos_reset()
     {
         PRINT_ERROR("  motor[%d]", it);
     }
+
+    return 1;
 }
 
 

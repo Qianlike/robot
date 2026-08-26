@@ -66,7 +66,7 @@ public:
     void reset(uint8_t id);
 
     void request_motor_state(void);
-    void motor_zero_pos_reset(void);
+    uint8_t motor_zero_pos_reset(void);
 
     motor_state_t *get_motor_state(uint8_t id);
 

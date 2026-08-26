@@ -24,7 +24,7 @@ public:
     
     
     void request_motor_state();
-    void motor_zero_pos_reset();
+    uint8_t motor_zero_pos_reset();
     void send();
 
     void position(uint8_t can_port_id, uint8_t id, float pos);
